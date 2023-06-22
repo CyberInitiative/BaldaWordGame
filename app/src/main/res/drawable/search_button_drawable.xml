@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<selector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:state_pressed="false" app:not_active="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="@color/carmel_woods" />
+            <corners android:radius="10dp" />
+            <solid android:color="@color/donegal_tweed" />
+        </shape>
+    </item>
+    <item android:state_pressed="true" app:not_active="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="@color/burley_wood" />
+            <corners android:radius="10dp" />
+            <solid android:color="@color/lion_mane" />
+        </shape>
+    </item>
+    <item android:state_pressed="false" app:active="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="@color/lion_mane" />
+            <corners android:radius="10dp" />
+            <solid android:color="@color/burley_wood" />
+        </shape>
+    </item>
+    <item android:state_pressed="true" app:active="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="@color/donegal_tweed" />
+            <corners android:radius="10dp" />
+            <solid android:color="@color/carmel_woods" />
+        </shape>
+    </item>
+
+</selector>

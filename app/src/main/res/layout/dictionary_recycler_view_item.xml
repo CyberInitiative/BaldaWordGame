@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dictionary_recycler_view_drawable"
+    android:paddingTop="5dp"
+
+    android:paddingBottom="5dp">
+
+    <TextView
+        android:id="@+id/textViewWordInDictionary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/kelly_slab_regular"
+        android:gravity="center"
+        android:shadowColor="@color/ripe_wheat"
+        android:shadowDx="1.2"
+        android:shadowDy="2"
+        android:shadowRadius="0.9"
+        android:textColor="@color/black"
+        android:text="sample_text"
+        android:textSize="18sp" />
+
+</LinearLayout>

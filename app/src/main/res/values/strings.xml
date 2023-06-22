@@ -1,0 +1,45 @@
+<resources>
+    <string name="app_name">BaldaWordGame</string>
+    <string name="find_game_btn_text">Найти игру</string>
+    <string name="create_game_btn_text">Создать игру</string>
+    <string name="log_in_btn_text">Войти</string>
+    <string name="sign_up_btn_text">Зарегистрироваться</string>
+    <string name="confirm_btn_text">Подтвердить</string>
+    <string name="email_hint_text">E-mail</string>
+    <string name="password_hint_text">Пароль</string>
+    <string name="confirm_password_hint_text">Подтвердить пароль</string>
+    <string name="username_hint_text">Имя пользователя</string>
+    <string name="room_creating_text_view_text">Игра онлайн</string>
+    <string name="three_on_three_btn_text">3 на 3</string>
+    <string name="five_on_five_btn_text">5 на 5</string>
+    <string name="seven_on_seven_btn_text">7 на 7</string>
+    <string name="any_format_time_btn_text">Любой</string>
+    <string name="textview_game_format_text">Формат игрового поля:</string>
+    <string name="game_format_label_text">Поле</string>
+    <string name="textview_timer_text">Время на ход:</string>
+    <string name="timer_label_text_view_text">Таймер</string>
+    <string name="thirty_seconds_radio_text">30 сек.</string>
+    <string name="one_minute_radio_text">1 мин.</string>
+    <string name="two_minutes_radio_text">2 мин.</string>
+    <string name="any_time_radio_text">Любое</string>
+    <string name="room_creating_subtitle_text_view_text">Настройка партии</string>
+    <string name="opponent_label_txt">Оппонент</string>
+    <string name="play_button_text">Играть</string>
+
+    <string name="text_view_game_room_creation_label">Создание комнаты</string>
+    <string name="text_view_game_grid_size_label">Размер игрового поля:</string>
+    <string name="text_view_game_turn_time_label">Время на ход:</string>
+    <string name="button_game_room_creation_proceed_not_active">Начать поиск</string>
+    <string name="button_game_room_creation_proceed_active">Остановить поиск</string>
+    <string name="text_view_open_rooms_label">Список комнат</string>
+    <string name="text_view_game_room_player_label">Ваш словарь:</string>
+    <string name="text_view_game_room_opponent_label">Словарь оппонента:</string>
+    <string name="text_view_game_room_player_points">Ваши очки: 0</string>
+    <string name="text_view_game_room_opponent_points">Очки оппонента: 0</string>
+    <string name="text_view_dictionary_plug">Словарь пуст</string>
+    <string name="text_view_waiting_gor_opponent_label">Ожидаем противника</string>
+    <string name="button_skip_turn_text">SKIP</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

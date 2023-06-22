@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/golden_rice"
+    android:orientation="vertical"
+    tools:context=".GameCreationFragment">
+
+    <TextView
+        android:id="@+id/textViewGameRoomCreationLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/title_text_view_drawable"
+        android:fontFamily="@font/kelly_slab_regular"
+        android:gravity="center"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:shadowColor="@color/black"
+        android:shadowDx="1.2"
+        android:shadowDy="2"
+        android:shadowRadius="0.9"
+        android:text="@string/text_view_game_room_creation_label"
+        android:textColor="@color/lion_mane"
+        android:textSize="36sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:animateLayoutChanges="true"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textViewGameGridFormatLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:gravity="center"
+            android:paddingTop="5dp"
+            android:shadowColor="@color/ripe_wheat"
+            android:shadowDx="1.2"
+            android:shadowDy="2"
+            android:shadowRadius="0.9"
+            android:text="@string/text_view_game_grid_size_label"
+            android:textColor="@color/black"
+            android:textSize="26sp" />
+
+        <RadioGroup
+            android:id="@+id/gameGridSizeRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/radioButtonThreeOnThree"
+                android:layout_width="90dp"
+                android:layout_height="50dp"
+                android:background="@drawable/grid_size_radio_button"
+                android:button="@android:color/transparent"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:shadowColor="@color/ripe_wheat"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/three_on_three_btn_text"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="24sp" />
+
+            <RadioButton
+                android:id="@+id/radioButtonFiveOnFive"
+                android:layout_width="90dp"
+                android:layout_height="50dp"
+                android:layout_marginLeft="25dp"
+                android:layout_marginRight="25dp"
+                android:background="@drawable/grid_size_radio_button"
+                android:button="@android:color/transparent"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:shadowColor="@color/ripe_wheat"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/five_on_five_btn_text"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="24sp" />
+
+            <RadioButton
+                android:id="@+id/radioButtonSevenOnSeven"
+                android:layout_width="90dp"
+                android:layout_height="50dp"
+                android:background="@drawable/grid_size_radio_button"
+                android:button="@android:color/transparent"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:shadowColor="@color/ripe_wheat"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/seven_on_seven_btn_text"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="24sp" />
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/textViewGameTurnTimeLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:gravity="center"
+            android:paddingTop="5dp"
+            android:shadowColor="@color/ripe_wheat"
+            android:shadowDx="1.2"
+            android:shadowDy="2"
+            android:shadowRadius="0.9"
+            android:text="@string/text_view_game_turn_time_label"
+            android:textColor="@color/black"
+            android:textSize="26sp" />
+
+        <RadioGroup
+            android:id="@+id/gameTimerRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="50dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/radioButtonTimerThirtySeconds"
+                android:layout_width="90dp"
+                android:layout_height="50dp"
+                android:background="@drawable/grid_size_radio_button"
+                android:button="@android:color/transparent"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:shadowColor="@color/ripe_wheat"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/thirty_seconds_radio_text"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="24sp" />
+
+            <RadioButton
+                android:id="@+id/radioButtonTimerOnMinute"
+                android:layout_width="90dp"
+                android:layout_height="50dp"
+                android:layout_marginLeft="25dp"
+                android:layout_marginRight="25dp"
+                android:background="@drawable/grid_size_radio_button"
+                android:button="@android:color/transparent"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:shadowColor="@color/ripe_wheat"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/one_minute_radio_text"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="24sp" />
+
+            <RadioButton
+                android:id="@+id/radioButtonTimerTwoMinutes"
+                android:layout_width="90dp"
+                android:layout_height="50dp"
+                android:background="@drawable/grid_size_radio_button"
+                android:button="@android:color/transparent"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:shadowColor="@color/ripe_wheat"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/two_minutes_radio_text"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="24sp" />
+        </RadioGroup>
+
+        <view class="com.example.baldawordgame.SearchGameButton"
+            android:id="@+id/buttonGameCreationProceed"
+            android:layout_width="240dp"
+            android:layout_height="66dp"
+            android:layout_marginBottom="20dp"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:shadowColor="@color/ripe_wheat"
+            android:shadowDx="1.2"
+            android:shadowDy="2"
+            android:shadowRadius="0.9"
+            android:textColor="@color/black"
+            android:textSize="22sp" />
+
+        <TextView
+            android:id="@+id/textViewWaitingForOpponentLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:gravity="center"
+            android:paddingTop="5dp"
+            android:shadowColor="@color/ripe_wheat"
+            android:shadowDx="1.2"
+            android:shadowDy="2"
+            android:shadowRadius="0.9"
+            android:text="@string/text_view_waiting_gor_opponent_label"
+            android:textColor="@color/black"
+            android:textSize="26sp"
+            android:visibility="invisible" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyle"
+            android:indeterminateTint="@color/ripe_wheat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"/>
+
+
+    </LinearLayout>
+
+
+</LinearLayout>

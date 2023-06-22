@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<selector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:state_pressed="false" app:unavailable_without_letter="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="#4E5D67" />
+            <corners android:radius="10dp" />
+            <solid android:color="#748894" />
+        </shape>
+    </item>
+    <item android:state_pressed="true" app:unavailable_without_letter="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="#363F41" />
+            <corners android:radius="10dp" />
+            <solid android:color="#4E5D67" />
+        </shape>
+    </item>
+    <item android:state_pressed="false" app:available_without_letter="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="#6F996F" />
+            <corners android:radius="10dp" />
+            <solid android:color="#95C198" />
+        </shape>
+    </item>
+    <item android:state_pressed="true" app:available_without_letter="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="#4A7149" />
+            <corners android:radius="10dp" />
+            <solid android:color="#6F996F" />
+        </shape>
+    </item>
+    <item android:state_pressed="false" app:with_letter="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="#798885" />
+            <corners android:radius="10dp" />
+            <solid android:color="#A6BDBF" />
+        </shape>
+    </item>
+    <item android:state_pressed="true" app:with_letter="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="#879D9A" />
+            <corners android:radius="10dp" />
+            <solid android:color="#9BB5B8" />
+        </shape>
+    </item>
+    <item android:state_pressed="false" app:part_of_combination="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="#5B98C1" />
+            <corners android:radius="10dp" />
+            <solid android:color="#85C2E0" />
+        </shape>
+    </item>
+    <item android:state_pressed="true" app:part_of_combination="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="#39729C" />
+            <corners android:radius="10dp" />
+            <solid android:color="#5B98C1" />
+        </shape>
+    </item>
+    <item android:state_pressed="false" app:intended_letter="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="#38613D" />
+            <corners android:radius="10dp" />
+            <solid android:color="#5ABD62" />
+        </shape>
+    </item>
+    <item android:state_pressed="true" app:intended_letter="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="1.2dp" android:color="#43594C" />
+            <corners android:radius="10dp" />
+            <solid android:color="#33923C" />
+        </shape>
+    </item>
+
+</selector>

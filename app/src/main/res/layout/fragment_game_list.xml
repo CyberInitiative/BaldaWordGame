@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/golden_rice"
+    android:orientation="vertical"
+    android:paddingBottom="5dp"
+    tools:context=".GameListFragment">
+
+    <TextView
+        android:id="@+id/textViewOpenRoomsLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/title_text_view_drawable"
+        android:fontFamily="@font/kelly_slab_regular"
+        android:gravity="center"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:shadowColor="@color/black"
+        android:shadowDx="1.2"
+        android:shadowDy="2"
+        android:shadowRadius="0.9"
+        android:text="@string/text_view_open_rooms_label"
+        android:textColor="@color/lion_mane"
+        android:textSize="36sp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewGames"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:overScrollMode="never" />
+
+</LinearLayout>

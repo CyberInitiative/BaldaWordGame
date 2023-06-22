@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/recycler_view_item_drawable"
+    android:orientation="horizontal"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="2"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/opponent_label_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:shadowColor="@color/ripe_wheat"
+            android:shadowDx="1.2"
+            android:shadowDy="2"
+            android:shadowRadius="0.9"
+            android:text="@string/opponent_label_txt"
+            android:textColor="@color/black"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/opponentNameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:shadowColor="@color/ripe_wheat"
+            android:shadowDx="1.2"
+            android:shadowDy="2"
+            android:shadowRadius="0.9"
+            android:text="sample_name"
+            android:textColor="@color/black"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="2"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/game_grid_size_label_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+
+                android:fontFamily="@font/kelly_slab_regular"
+                android:shadowColor="@color/ripe_wheat"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/game_format_label_text"
+                android:textColor="@color/black"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/gameGridSizeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:shadowColor="@color/ripe_wheat"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/five_on_five_btn_text"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/turnTimeLabelTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:shadowColor="@color/ripe_wheat"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/timer_label_text_view_text"
+                android:textColor="@color/black"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/turnTimeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:shadowColor="@color/ripe_wheat"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/two_minutes_radio_text"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <android.widget.Button
+            android:id="@+id/joinRoomButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:background="@drawable/recycler_button"
+            android:drawableStart="@drawable/recycler_button"
+            android:drawableEnd="@drawable/recycler_button"
+            android:drawablePadding="10dp"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:shadowColor="@color/ripe_wheat"
+            android:shadowDx="1.2"
+            android:shadowDy="2"
+            android:shadowRadius="0.9"
+            android:text="@string/play_button_text"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+
+</LinearLayout>
+
+    <!--<TextView-->
+    <!--android:id="@+id/timer_label_text_view"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:text="@string/one_minute_radio_text"-->
+    <!--android:textSize="25sp" />-->

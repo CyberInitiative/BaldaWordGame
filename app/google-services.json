@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "69008978566",
+    "firebase_url": "https://baldawordgame-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "baldawordgame",
+    "storage_bucket": "baldawordgame.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69008978566:android:d7b8eb3dff05dd7767d707",
+        "android_client_info": {
+          "package_name": "com.example.baldawordgame"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "69008978566-ph8b6db8sqjeirk4ptigh5encjdigt6l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.baldawordgame",
+            "certificate_hash": "866e330efee87fc27d92e4c531d4cd1a3b069548"
+          }
+        },
+        {
+          "client_id": "69008978566-on4dnm40j7beotjkhienl6krdpd5l495.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq1JNiNt9ChNY-bzx2mDAo68vk2CFbYUQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "69008978566-on4dnm40j7beotjkhienl6krdpd5l495.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,502 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#DFE8E6"
+    android:orientation="vertical"
+    tools:context=".GameActivity">
+
+    <EditText
+        android:id="@+id/input_receiver"
+        android:layout_width="0.1dp"
+        android:layout_height="0.1dp"
+        android:inputType="textPassword"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/top_linear_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/ocean_tropic"
+        android:orientation="horizontal"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/input_receiver">
+
+        <TextView
+            android:id="@+id/textViewTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_weight="1"
+            android:textSize="20sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/game_board_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingLeft="10dp"
+        android:paddingTop="10dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/top_linear_layout"></LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewShowPanel"
+        android:layout_width="wrap_content"
+        android:layout_height="60dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        android:paddingLeft="10dp"
+        android:paddingTop="10dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/game_board_layout"></androidx.recyclerview.widget.RecyclerView>
+
+    <LinearLayout
+        android:id="@+id/players_game_statistic"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_linear_layout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/recyclerViewShowPanel">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="2.5dp"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/textViewPlayerDictionaryLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/text_view_drawable"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:gravity="center"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:shadowColor="#E2EDEC"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/text_view_game_room_player_label"
+                android:textColor="#3E4855"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/textViewPlayerDictionaryPlug"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:gravity="center"
+                android:text="@string/text_view_dictionary_plug"
+                app:layout_constraintBottom_toBottomOf="@+id/recyclerViewPlayerDictionary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textViewPlayerDictionaryLabel" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewPlayerDictionary"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="5dp"
+                android:overScrollMode="never"
+                app:layout_constraintBottom_toTopOf="@+id/textViewPlayerPoints"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textViewPlayerDictionaryLabel" />
+
+            <TextView
+                android:id="@+id/textViewPlayerPoints"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/text_view_drawable"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:gravity="center"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:shadowColor="#E2EDEC"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/text_view_game_room_player_points"
+                android:textColor="#3E4855"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="2.5dp"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/textViewOpponentDictionaryLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/text_view_drawable"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:gravity="center"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:shadowColor="#E2EDEC"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/text_view_game_room_opponent_label"
+                android:textColor="#3E4855"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewOpponentDictionary"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="5dp"
+                android:overScrollMode="never"
+                app:layout_constraintBottom_toTopOf="@+id/textViewOpponentPoints"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textViewOpponentDictionaryLabel" />
+
+            <TextView
+                android:id="@+id/textViewOpponentDictionaryPlug"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:gravity="center"
+                android:text="@string/text_view_dictionary_plug"
+                app:layout_constraintBottom_toBottomOf="@+id/recyclerViewOpponentDictionary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textViewOpponentDictionaryLabel" />
+
+            <TextView
+                android:id="@+id/textViewOpponentPoints"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/text_view_drawable"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:gravity="center"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:shadowColor="#E2EDEC"
+                android:shadowDx="1.2"
+                android:shadowDy="2"
+                android:shadowRadius="0.9"
+                android:text="@string/text_view_game_room_opponent_points"
+                android:textColor="#3E4855"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bottom_linear_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#94B8C3"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <android.widget.Button
+            android:id="@+id/buttonSkipTurn"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/round_button_drawable"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:shadowColor="#E2EDEC"
+            android:shadowDx="1.2"
+            android:shadowDy="2"
+            android:shadowRadius="0.9"
+            android:text="@string/button_skip_turn_text"
+            android:textColor="#3E4855"
+            android:textSize="14sp" />
+
+        <ImageButton
+            android:id="@+id/buttonConfirmCombination"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/round_button_drawable"
+            android:src="@drawable/ic_confirm"
+            android:textSize="20sp" />
+
+        <ImageButton
+            android:id="@+id/buttonDictionaryCheck"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/round_button_drawable"
+            android:src="@drawable/ic_simple_dic"
+            android:textSize="20sp" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!--<LinearLayout-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:layout_marginLeft="5dp"-->
+    <!--android:layout_marginRight="2.50dp"-->
+    <!--android:layout_weight="1"-->
+    <!--android:gravity="center"-->
+    <!--android:orientation="vertical">-->
+
+
+    <!--<TextView-->
+    <!--    android:id="@+id/textViewPlayerDictionaryPlug"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="0dp"-->
+    <!--    android:gravity="center"-->
+    <!--    android:text="@string/text_view_dictionary_plug" />-->
+
+    <!--    <androidx.recyclerview.widget.RecyclerView-->
+    <!--        android:id="@+id/recyclerViewPlayerDictionary"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="0dp" />-->
+
+    <!--    <TextView-->
+    <!--        android:id="@+id/textViewPlayerPoints"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_marginTop="2.50dp"-->
+    <!--        android:background="@drawable/text_view_drawable"-->
+    <!--        android:fontFamily="@font/kelly_slab_regular"-->
+    <!--        android:gravity="center"-->
+    <!--        android:paddingTop="5dp"-->
+    <!--        android:paddingBottom="5dp"-->
+    <!--        android:shadowColor="@color/black"-->
+    <!--        android:shadowDx="1.2"-->
+    <!--        android:shadowDy="2"-->
+    <!--        android:shadowRadius="0.9"-->
+    <!--        android:text="@string/text_view_game_room_player_points"-->
+    <!--        android:textColor="@color/lion_mane"-->
+    <!--        android:textSize="18sp" />-->
+
+    <!--</LinearLayout>-->
+
+    <!--<LinearLayout-->
+
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:layout_marginLeft="2.50dp"-->
+    <!--android:layout_marginRight="5dp"-->
+    <!--android:layout_weight="1"-->
+    <!--android:gravity="center"-->
+    <!--android:orientation="vertical">-->
+
+    <!--<TextView-->
+    <!--    android:id="@+id/textViewOpponentDictionaryLabel"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:layout_marginBottom="2.50dp"-->
+    <!--    android:background="@drawable/text_view_drawable"-->
+    <!--    android:fontFamily="@font/kelly_slab_regular"-->
+    <!--    android:gravity="center"-->
+    <!--    android:paddingTop="5dp"-->
+    <!--    android:paddingBottom="5dp"-->
+    <!--    android:shadowColor="@color/black"-->
+    <!--    android:shadowDx="1.2"-->
+    <!--    android:shadowDy="2"-->
+    <!--    android:shadowRadius="0.9"-->
+    <!--    android:text="@string/text_view_game_room_opponent_label"-->
+    <!--    android:textColor="@color/lion_mane"-->
+    <!--    android:textSize="17sp" />-->
+
+    <!--<TextView-->
+    <!--    android:id="@+id/textViewOpponentDictionaryPlug"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="0dp"-->
+    <!--    android:gravity="center"-->
+    <!--    android:text="@string/text_view_dictionary_plug" />-->
+
+    <!--<androidx.recyclerview.widget.RecyclerView-->
+    <!--    android:id="@+id/recyclerViewOpponentDictionary"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="0dp" />-->
+
+    <!--<TextView-->
+    <!--    android:id="@+id/textViewOpponentPoints"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:layout_marginTop="2.50dp"-->
+    <!--    android:background="@drawable/text_view_drawable"-->
+    <!--    android:fontFamily="@font/kelly_slab_regular"-->
+    <!--    android:gravity="center"-->
+    <!--    android:paddingTop="5dp"-->
+    <!--    android:paddingBottom="5dp"-->
+    <!--    android:shadowColor="@color/black"-->
+    <!--    android:shadowDx="1.2"-->
+    <!--    android:shadowDy="2"-->
+    <!--    android:shadowRadius="0.9"-->
+    <!--    android:text="@string/text_view_game_room_opponent_points"-->
+    <!--    android:textColor="@color/lion_mane"-->
+    <!--    android:textSize="18sp" />-->
+    <!--</LinearLayout>-->
+
+
+    <!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+    <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
+    <!--xmlns:tools="http://schemas.android.com/tools"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:background="@color/scarlet"-->
+    <!--android:orientation="vertical"-->
+    <!--tools:context=".GameActivity">-->
+
+    <!--<EditText-->
+    <!--    android:id="@+id/input_receiver"-->
+    <!--    android:layout_width="0.1dp"-->
+    <!--    android:layout_height="0.1dp"-->
+    <!--    android:inputType="textPassword" />-->
+
+    <!--<LinearLayout-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:background="@color/lion_mane"-->
+    <!--    android:orientation="vertical">-->
+    <!--    <TextView-->
+    <!--        android:id="@+id/textView"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:text="TextView" />-->
+    <!--</LinearLayout>-->
+
+    <!--<LinearLayout-->
+    <!--    android:id="@+id/game_board_layout"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:gravity="center"-->
+    <!--    android:orientation="vertical">-->
+    <!--</LinearLayout>-->
+
+    <!--<LinearLayout-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:background="@color/burley_wood"-->
+    <!--    android:orientation="horizontal">-->
+
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:layout_weight="1"-->
+    <!--        android:orientation="vertical">-->
+    <!--        <androidx.recyclerview.widget.RecyclerView-->
+    <!--            android:layout_width="match_parent"-->
+    <!--            android:layout_height="match_parent" />-->
+    <!--    </LinearLayout>-->
+
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:layout_weight="1"-->
+    <!--        android:orientation="vertical">-->
+    <!--        <androidx.recyclerview.widget.RecyclerView-->
+    <!--            android:layout_width="match_parent"-->
+    <!--            android:layout_height="match_parent" />-->
+    <!--    </LinearLayout>-->
+    <!--</LinearLayout>-->
+
+    <!--<LinearLayout-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:background="@color/lion_mane"-->
+    <!--    android:gravity="center"-->
+    <!--    android:paddingBottom="6dp"-->
+    <!--    android:paddingTop="6dp"-->
+    <!--    android:orientation="horizontal">-->
+
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:layout_weight="1"-->
+    <!--        android:gravity="center"-->
+    <!--        android:orientation="horizontal">-->
+
+    <!--        <Button-->
+    <!--            android:layout_width="63dp"-->
+    <!--            android:layout_height="65dp"-->
+    <!--            android:text="1" />-->
+    <!--    </LinearLayout>-->
+
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:layout_weight="1"-->
+    <!--        android:gravity="center"-->
+    <!--        android:orientation="horizontal">-->
+
+    <!--        <android.widget.Button-->
+    <!--            android:layout_width="62dp"-->
+    <!--            android:layout_height="62dp"-->
+    <!--            android:layout_marginLeft="10dp"-->
+    <!--            android:layout_marginRight="10dp"-->
+    <!--            android:background="@drawable/round_button_drawable"-->
+    <!--            android:fontFamily="@font/kelly_slab_regular"-->
+    <!--            android:shadowColor="@color/ripe_wheat"-->
+    <!--            android:shadowDx="1.2"-->
+    <!--            android:shadowDy="2"-->
+    <!--            android:shadowRadius="0.9"-->
+    <!--            android:text="skip"-->
+    <!--            android:textSize="20sp" />-->
+    <!--    </LinearLayout>-->
+
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:layout_weight="1"-->
+    <!--        android:gravity="center"-->
+    <!--        android:orientation="horizontal">-->
+
+    <!--        <Button-->
+    <!--            android:layout_width="65dp"-->
+    <!--            android:layout_height="65dp"-->
+    <!--            android:text="3" />-->
+    <!--    </LinearLayout>-->
+
+    <!--</LinearLayout>-->
+
+    <!--</LinearLayout>-->
