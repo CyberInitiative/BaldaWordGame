@@ -1,74 +1,156 @@
 package com.example.baldawordgame;
 
-import android.content.Context;
+import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
+import androidx.annotation.Nullable;
 
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Exclude;
+import com.google.firebase.database.ValueEventListener;
 
-public class LetterCell extends androidx.appcompat.widget.AppCompatButton implements GameCell.Subscriber {
+import java.util.Objects;
 
+public class LetterCell {
+    private final static String TAG = "LETTER_CELL";
+    private int columnIndex;
+    private int rowIndex;
+    private String letter;
     private String state;
+    private Subscriber subscriber;
 
-    private static final int[] STATE_AVAILABLE_WITHOUT_LETTER = {R.attr.available_without_letter};
-    private static final int[] STATE_UNAVAILABLE_WITHOUT_LETTER = {R.attr.unavailable_without_letter};
-    private static final int[] STATE_WITH_LETTER = {R.attr.with_letter};
-    private static final int[] STATE_PART_OF_COMBINATION = {R.attr.part_of_combination};
-    private static final int[] STATE_INTENDED_LETTER = {R.attr.intended_letter};
+    public interface Subscriber {
+        void processUpdatedGameCellState(String cellState);
 
-    public LetterCell(@NonNull Context context) {
-        super(context);
-        this.setBackground(ContextCompat.getDrawable(this.getContext(), R.drawable.letter_cell));
+        void processUpdatedGameCellLetter(String letterInCell);
     }
 
-    @Override
-    protected int[] onCreateDrawableState(int extraSpace) {
-        final int[] drawableState = super.onCreateDrawableState(extraSpace + 6);
-        if(state != null) {
-            switch (state) {
-                case GameCell.LETTER_CELL_UNAVAILABLE_WITHOUT_LETTER_STATE:
-                    mergeDrawableStates(drawableState, STATE_UNAVAILABLE_WITHOUT_LETTER);
-                    break;
-                case GameCell.LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE:
-                    mergeDrawableStates(drawableState, STATE_AVAILABLE_WITHOUT_LETTER);
-                    break;
-                case GameCell.LETTER_CELL_WITH_LETTER_STATE:
-                    mergeDrawableStates(drawableState, STATE_WITH_LETTER);
-                    break;
-                case GameCell.LETTER_CELL_SELECTED_AS_PART_OF_COMBINATION_STATE:
-                case GameCell.LETTER_CELL_INTENDED_SELECTED_AS_PART_OF_COMBINATION_STATE:
-                    mergeDrawableStates(drawableState, STATE_PART_OF_COMBINATION);
-                    break;
-                case GameCell.LETTER_CELL_INTENDED_STATE:
-                    mergeDrawableStates(drawableState, STATE_INTENDED_LETTER);
-                    break;
-            }
-        }
-        return drawableState;
+    public LetterCell() {}
+
+    public LetterCell(int columnIndex, int rowIndex) {
+        this.columnIndex = columnIndex;
+        this.rowIndex = rowIndex;
+        this.state = LetterCell.LETTER_CELL_UNAVAILABLE_WITHOUT_LETTER_STATE;
+        this.letter = LetterCell.NO_LETTER_PLUG;
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, widthMeasureSpec);
+    public int getColumnIndex() {
+        return columnIndex;
+    }
+
+    public int getRowIndex() {
+        return rowIndex;
+    }
+
+    public void setLetter(String letter) {
+        this.letter = letter;
+    }
+
+    public void setLetterAndNotifySubscriber(String letter) {
+        this.letter = letter;
+        notifySubscriberAboutLetterChange();
+    }
+
+    public String getLetter() {
+        return letter;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public void setStateAndNotifySubscriber(String state) {
+        this.state = state;
+        notifySubscriberAboutStateChange();
     }
 
     public String getState() {
         return state;
     }
 
-    public void setState(String state) {
-        this.state = state;
-        refreshDrawableState();
+    public void addSubscriber(Subscriber subscriber) {
+        this.subscriber = subscriber;
+        Log.d(TAG, "addSubscriber(); LetterCell object got subscriber: " + subscriber);
+    }
+
+    public void removeSubscriber() {
+        Log.d(TAG, "removeSubscriber(); Subscriber " + subscriber + " unsubscribed from the LetterCell object;");
+        subscriber = null;
+    }
+
+    @Exclude
+    public Subscriber getSubscriber() {
+        return subscriber;
+    }
+
+    public LetterCellMemento saveStateToMemento() {
+        return new LetterCellMemento(this.getState(), this.getLetter());
+    }
+
+    public void getStateFromMemento(@NonNull LetterCellMemento memento) {
+        this.state = memento.getState();
+        this.letter = memento.getLetter();
+    }
+
+    public void notifySubscriberAboutStateChange() {
+        if (subscriber != null) {
+            subscriber.processUpdatedGameCellState(state);
+            Log.d(TAG, "notifySubscriberAboutStateChange(); Subscriber notified about state change;");
+        } else {
+            Log.w(TAG, "notifySubscriberAboutStateChange();  Subscriber not notified -- subscriber is null;");
+        }
+    }
+
+    public void notifySubscriberAboutLetterChange() {
+        if (subscriber != null) {
+            subscriber.processUpdatedGameCellLetter(letter);
+            Log.d(TAG, "notifySubscriberAboutLetterChange(); Subscriber notified about letter change;");
+        } else {
+            Log.w(TAG, "notifySubscriberAboutLetterChange(); Subscriber not notified -- subscriber is null;");
+        }
+    }
+
+    @Exclude
+    public static final String LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE = "LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE";
+    @Exclude
+    public static final String LETTER_CELL_UNAVAILABLE_WITHOUT_LETTER_STATE = "LETTER_CELL_UNAVAILABLE_WITHOUT_LETTER_STATE";
+    @Exclude
+    public static final String LETTER_CELL_WITH_LETTER_STATE = "LETTER_CELL_WITH_LETTER_STATE";
+    @Exclude
+    public static final String LETTER_CELL_SELECTED_AS_PART_OF_COMBINATION_STATE = "LETTER_CELL_SELECTED_AS_PART_OF_COMBINATION_STATE";
+    //В эту клетку игрок вставил букву;
+    @Exclude
+    public static final String LETTER_CELL_INTENDED_STATE = "LETTER_CELL_INTENDED_STATE";
+    //Клетка со вставленной игроком буквой стала частью комбинации букв, формирующих слово;
+    @Exclude
+    public static final String LETTER_CELL_INTENDED_SELECTED_AS_PART_OF_COMBINATION_STATE = "LETTER_CELL_INTENDED_SELECTED_AS_PART_OF_COMBINATION_STATE";
+    @Exclude
+    public static final String LETTER_CELL_UNDEFINED_STATE = "LETTER_CELL_UNDEFINED_STATE";
+    @Exclude
+    public static final String NO_LETTER_PLUG = "NO_LETTER_PLUG";
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "LetterCell{" +
+                "columnIndex=" + columnIndex +
+                ", rowIndex=" + rowIndex +
+                ", letter='" + letter + '\'' +
+                ", state='" + state + '\'' +
+                '}';
     }
 
     @Override
-    public void processUpdatedGameCellState(String cellState) {
-        setState(cellState);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LetterCell that = (LetterCell) o;
+        return columnIndex == that.columnIndex && rowIndex == that.rowIndex && Objects.equals(letter, that.letter) && Objects.equals(state, that.state);
     }
 
     @Override
-    public void processUpdatedGameCellLetter(String letterInCell) {
-        this.setText(letterInCell);
+    public int hashCode() {
+        return Objects.hash(columnIndex, rowIndex, letter, state);
     }
 }

@@ -14,6 +14,8 @@ public class GameViewModelFactory implements ViewModelProvider.Factory {
     @NonNull
     @Override
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-        return (T) new GameViewModel();
+        GameViewModel gameViewModel = new GameViewModel(gameRoomKey);
+        gameViewModel.test();
+        return (T) gameViewModel;
     }
 }

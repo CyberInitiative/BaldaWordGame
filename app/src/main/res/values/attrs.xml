@@ -7,20 +7,4 @@
         <attr name="part_of_combination" format="boolean"/>
         <attr name="intended_letter" format="boolean"/>
     </declare-styleable>
-
-    <declare-styleable name="SearchGameButton">
-        <attr name="not_active" format="boolean"/>
-        <attr name="active" format="boolean"/>
-    </declare-styleable>
 </resources>
-
-    <!--<attr name="state_available_without_letter" format="boolean"/>-->
-    <!--<attr name="state_intended_letter" format="boolean"/>-->
-
-<!--<attr name="cell_state" format="enum">-->
-<!--<enum name="unavailable_without_letter" value="1" />-->
-<!--<enum name="available_without_letter" value="2" />-->
-<!--<enum name="with_letter" value="3" />-->
-<!--<enum name="part_of_combination" value="4" />-->
-<!--<enum name="intended_letter" value="5" />-->
-<!--</attr>-->

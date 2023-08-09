@@ -1,7 +1,6 @@
 package com.example.baldawordgame;
 
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.baldawordgame.model.GameRoom;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -90,7 +90,7 @@ public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHo
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         String snapshotData = snapshot.getValue(String.class);
                         if (snapshotData != null) {
-                            if (snapshotData.equals(GameRoom.GAME_IS_READY)) {
+                            if (snapshotData.equals(GameRoom.ROOM_CREATED_STATE)) {
                                 intent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, gameRoom.getGameRoomKey());
                                 itemView.getContext().startActivity(intent);
                             }

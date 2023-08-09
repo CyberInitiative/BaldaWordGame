@@ -131,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
+        Dictionary.loadDictionaryFromFirebase();
         firebaseDatabase = FirebaseDatabase.getInstance();
 //        firebaseDatabase.setPersistenceEnabled(true);
 //        dictionaryRef = FirebaseDatabase.getInstance().getReference("dictionary");

@@ -1,6 +1,6 @@
 package com.example.baldawordgame;
 
-import java.util.List;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class User {
     private String email;
@@ -20,6 +20,10 @@ public class User {
         this.username = username;
         this.gamesPlayed = gamesPlayed;
         this.wins = wins;
+    }
+
+    public static String getPlayerKey(){
+        return FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
 
     public void increaseGamesPlayedCounter(){

@@ -183,17 +183,18 @@
                 android:textSize="24sp" />
         </RadioGroup>
 
-        <view class="com.example.baldawordgame.SearchGameButton"
+        <ToggleButton
             android:id="@+id/buttonGameCreationProceed"
             android:layout_width="240dp"
             android:layout_height="66dp"
             android:layout_marginBottom="20dp"
+            android:background="@drawable/toggle_button"
             android:fontFamily="@font/kelly_slab_regular"
             android:shadowColor="@color/ripe_wheat"
             android:shadowDx="1.2"
             android:shadowDy="2"
             android:shadowRadius="0.9"
-            android:textColor="@color/black"
+            android:textColor="@color/toggle_button_text"
             android:textSize="22sp" />
 
         <TextView
@@ -216,11 +217,10 @@
         <ProgressBar
             android:id="@+id/progressBar"
             style="?android:attr/progressBarStyle"
-            android:indeterminateTint="@color/ripe_wheat"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="invisible"/>
-
+            android:indeterminateTint="@color/ripe_wheat"
+            android:visibility="invisible" />
 
     </LinearLayout>
 

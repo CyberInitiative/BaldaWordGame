@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.baldawordgame.model.GameRoom;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -39,8 +40,8 @@ public class GameListFragment extends Fragment {
         @Override
         public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
             GameRoom gameRoom = snapshot.getValue(GameRoom.class);
-            openRoomsArrayList.add(gameRoom);
-            gameRoomAdapter.notifyItemInserted(openRoomsArrayList.size()-1);
+            openRoomsArrayList.add(0, gameRoom);
+            gameRoomAdapter.notifyItemInserted(0);
         }
 
         @Override
@@ -51,12 +52,13 @@ public class GameListFragment extends Fragment {
         @Override
         public void onChildRemoved(@NonNull DataSnapshot snapshot) {
             GameRoom gameRoom = snapshot.getValue(GameRoom.class);
-            for (int i = 0; i < openRoomsArrayList.size(); i++) {
-                if (gameRoom != null) {
+            if (gameRoom != null) {
+                for (int i = 0; i < openRoomsArrayList.size(); i++) {
                     if (openRoomsArrayList.get(i).getGameRoomKey().equals(gameRoom.getGameRoomKey())) {
+                        int position = i;
                         openRoomsArrayList.remove(openRoomsArrayList.get(i));
                         if (gameRoomAdapter != null) {
-                            gameRoomAdapter.notifyItemRemoved(i);
+                            gameRoomAdapter.notifyItemRemoved(position);
                             break;
                         }
                     }

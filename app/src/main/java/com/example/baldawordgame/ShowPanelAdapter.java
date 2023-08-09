@@ -12,9 +12,9 @@ import java.util.LinkedList;
 
 public class ShowPanelAdapter extends RecyclerView.Adapter<ShowPanelAdapter.ViewHolder> {
 
-    private LinkedList<GameCell> listOfLetterCells;
+    private LinkedList<LetterCell> listOfLetterCells;
 
-    public ShowPanelAdapter(LinkedList<GameCell> listOfLetterCells) {
+    public ShowPanelAdapter(LinkedList<LetterCell> listOfLetterCells) {
         this.listOfLetterCells = listOfLetterCells;
     }
 
@@ -27,8 +27,8 @@ public class ShowPanelAdapter extends RecyclerView.Adapter<ShowPanelAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        GameCell gameCell = listOfLetterCells.get(position);
-        holder.selectedLetter.setText(gameCell.getLetterInCell());
+        LetterCell letterCell = listOfLetterCells.get(position);
+        holder.selectedLetter.setText(letterCell.getLetter());
     }
 
     @Override
