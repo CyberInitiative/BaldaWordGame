@@ -21,47 +21,73 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class GameListFragment extends Fragment {
 
-    public static final String TAG = "GAME_LIST_FRAGMENT";
+    public static final String TAG = "GameListFragment";
 
-    private RecyclerView recyclerViewGames;
+    private RecyclerView gamesRecyclerView;
     private GameRoomAdapter gameRoomAdapter;
-    private ArrayList<GameRoom> openRoomsArrayList = new ArrayList<>();
+    private ArrayList<GameRoom> gameRooms = new ArrayList<>();
+    private HashMap<DatabaseReference, ValueEventListener> refToListener = new HashMap<>();
 
-    private DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-    private DatabaseReference openRoomsReference = databaseReference.child("openRooms");
+    private Query roomsQuery = GameRoom.GAME_ROOMS_REF
+            .orderByChild("gameRoomStatus")
+            .equalTo(GameRoom.OPEN_GAME_ROOM);
 
     private ChildEventListener openRoomsChildEventListener = new ChildEventListener() {
         @Override
         public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
             GameRoom gameRoom = snapshot.getValue(GameRoom.class);
-            openRoomsArrayList.add(0, gameRoom);
+            gameRooms.add(0, gameRoom);
             gameRoomAdapter.notifyItemInserted(0);
+
+            ValueEventListener gameRoomStatusListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String gameRoomStatus = snapshot.getValue(String.class);
+                    if(gameRoomStatus != null){
+                        if(gameRoomStatus.equals(GameRoom.FULL_GAME_ROOM)){
+                            refToListener.remove(snapshot.getRef().child("gameRoomStatus"));
+                            snapshot.getRef().child("gameRoomStatus").removeEventListener(this);
+                            snapshot.getRef().removeValue();
+                            gameRooms.remove(gameRoom);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            };
+            refToListener.put(snapshot.getRef().child("gameRoomStatus"), gameRoomStatusListener);
         }
 
         @Override
         public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
+//            GameRoom gameRoom = snapshot.getValue(GameRoom.class);
+//            Log.d(TAG, "TRIGGERED;" + gameRoom);
+//            if (gameRoom != null && gameRoom.getGameRoomStatus().equals(GameRoom.FULL_GAME_ROOM)) {
+//                if (gameRooms.contains(gameRoom)) {
+//                    gameRoomAdapter.notifyItemRemoved(gameRooms.indexOf(gameRoom));
+//                    gameRooms.remove(gameRoom);
+//                }
+//            }
         }
 
         @Override
         public void onChildRemoved(@NonNull DataSnapshot snapshot) {
             GameRoom gameRoom = snapshot.getValue(GameRoom.class);
             if (gameRoom != null) {
-                for (int i = 0; i < openRoomsArrayList.size(); i++) {
-                    if (openRoomsArrayList.get(i).getGameRoomKey().equals(gameRoom.getGameRoomKey())) {
-                        int position = i;
-                        openRoomsArrayList.remove(openRoomsArrayList.get(i));
-                        if (gameRoomAdapter != null) {
-                            gameRoomAdapter.notifyItemRemoved(position);
-                            break;
-                        }
-                    }
+                if (gameRooms.contains(gameRoom)) {
+                    gameRoomAdapter.notifyItemRemoved(gameRooms.indexOf(gameRoom));
+                    gameRooms.remove(gameRoom);
                 }
             }
         }
@@ -90,7 +116,7 @@ public class GameListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_game_list, container, false);
-        init(view);
+        viewsSettings(view);
 
         Log.d(TAG, "onCreateView() called;");
         return view;
@@ -105,54 +131,22 @@ public class GameListFragment extends Fragment {
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        openRoomsReference.addChildEventListener(openRoomsChildEventListener);
-        Log.d(TAG, "onAttach() called;");
+        roomsQuery.addChildEventListener(openRoomsChildEventListener);
     }
 
     @Override
     public void onDetach() {
-        openRoomsReference.removeEventListener(openRoomsChildEventListener);
+        roomsQuery.removeEventListener(openRoomsChildEventListener);
         super.onDetach();
-        Log.d(TAG, "onDetach() called;");
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "onDestroy() called;");
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        Log.d(TAG, "onStart() called;");
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop() called;");
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume() called;");
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.d(TAG, "onPause() called;");
-    }
-
-    private void init(View view) {
-        recyclerViewGames = view.findViewById(R.id.recyclerViewGames);
-        gameRoomAdapter = new GameRoomAdapter(openRoomsArrayList);
-        recyclerViewGames.setAdapter(gameRoomAdapter);
-        recyclerViewGames.setLayoutManager(new LinearLayoutManager(this.getContext()));
+    private void viewsSettings(View view) {
+        gamesRecyclerView = view.findViewById(R.id.recyclerViewGames);
+        gameRoomAdapter = new GameRoomAdapter(gameRooms);
+        gamesRecyclerView.setAdapter(gameRoomAdapter);
+        gamesRecyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this.getContext(), DividerItemDecoration.VERTICAL);
         dividerItemDecoration.setDrawable(ContextCompat.getDrawable(this.getContext(), R.drawable.transparent_divider));
-        recyclerViewGames.addItemDecoration(dividerItemDecoration);
+        gamesRecyclerView.addItemDecoration(dividerItemDecoration);
     }
 }

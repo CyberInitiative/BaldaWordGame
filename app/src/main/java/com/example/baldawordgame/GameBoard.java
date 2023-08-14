@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 
 import com.google.firebase.database.DatabaseReference;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -19,9 +18,11 @@ public class GameBoard {
     private HashMap<DatabaseReference, LetterCell> letterCellToRef;
     private LinkedList<LetterCell> lettersCombination = new LinkedList<>();
     private LetterCellCareTaker letterCellCareTaker = new LetterCellCareTaker();
+    private Coordinator coordinator;
 
-    public GameBoard(HashMap<DatabaseReference, LetterCell> letterCellToRef) {
+    public GameBoard(HashMap<DatabaseReference, LetterCell> letterCellToRef, Coordinator coordinator) {
         this.letterCellToRef = letterCellToRef;
+        this.coordinator = coordinator;
     }
 
     public static boolean checkIfOneLetterIsCloseToAnother(@NonNull LetterCell currentCell, LetterCell allegedNeighbor) {
@@ -119,7 +120,13 @@ public class GameBoard {
         }
     }
 
-    public boolean checkCombination() {
+    public void sendCombination(){
+        if(checkConditions()){
+            coordinator.checkCombinedWord(makeUpWordFromCombination());
+        }
+    }
+
+    public boolean checkConditions() {
         boolean intendedLetterIsHere = false;
         if (!lettersCombination.isEmpty()) {
             for (LetterCell letterCell : lettersCombination) {
@@ -128,21 +135,20 @@ public class GameBoard {
                 }
             }
             if (intendedLetterIsHere) {
+                coordinator.checkCombinedWord(makeUpWordFromCombination());
                 return true;
             }
         }
         return false;
     }
 
-    public String makeUpWordFromCombination() {
+    private String makeUpWordFromCombination() {
         StringBuilder wordBuilder = new StringBuilder();
         for (LetterCell letterCell : lettersCombination) {
             wordBuilder.append(letterCell.getLetter());
         }
         return wordBuilder.toString();
     }
-
-
 
     public void updateAvailableLetterCellsAround(LetterCell letterCell) {
         int currColIndex = letterCell.getColumnIndex();
@@ -222,4 +228,5 @@ public class GameBoard {
     public LetterCellCareTaker getLetterCellCareTaker() {
         return letterCellCareTaker;
     }
+
 }

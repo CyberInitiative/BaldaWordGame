@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.baldawordgame.model.GameProcessData;
 import com.example.baldawordgame.model.GameRoom;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -22,11 +23,11 @@ import java.util.ArrayList;
 
 public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHolder> {
 
-    private ArrayList<GameRoom> listOfOpenGameRooms;
+    private ArrayList<GameRoom> openGameRooms;
     private DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
 
     public GameRoomAdapter(ArrayList<GameRoom> data) {
-        listOfOpenGameRooms = data;
+        openGameRooms = data;
     }
 
     @NonNull
@@ -38,7 +39,7 @@ public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        GameRoom gameRoom = listOfOpenGameRooms.get(position);
+        GameRoom gameRoom = openGameRooms.get(position);
         if (gameRoom.getGameGridSize() == 3) {
             holder.gameGridSizeTextView.setText(holder.itemView.getResources().getString(R.string.three_on_three_btn_text));
         } else if (gameRoom.getGameGridSize() == 5) {
@@ -64,7 +65,7 @@ public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHo
 
     @Override
     public int getItemCount() {
-        return listOfOpenGameRooms == null ? 0 : listOfOpenGameRooms.size();
+        return openGameRooms == null ? 0 : openGameRooms.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -75,22 +76,24 @@ public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHo
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+
             opponentNameTextView = itemView.findViewById(R.id.opponentNameTextView);
             gameGridSizeTextView = itemView.findViewById(R.id.gameGridSizeTextView);
             turnTimeTextView = itemView.findViewById(R.id.turnTimeTextView);
             joinRoomButton = itemView.findViewById(R.id.joinRoomButton);
+
             joinRoomButton.setOnClickListener(l -> {
                 FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
                 Intent intent = new Intent(itemView.getContext(), GameActivity.class);
-                GameRoom gameRoom = listOfOpenGameRooms.get(getAdapterPosition());
+                GameRoom gameRoom = openGameRooms.get(getAdapterPosition());
                 gameRoom.setPlayerTwoUID(firebaseAuth.getCurrentUser().getUid());
-                databaseReference.child("openRooms").child(gameRoom.getGameRoomKey()).child("playerTwoUID").setValue(firebaseAuth.getCurrentUser().getUid());
-                databaseReference.child("openRooms").child(gameRoom.getGameRoomKey()).child("gameRoomStatus").addValueEventListener(new ValueEventListener() {
+                GameRoom.GAME_ROOMS_REF.child(gameRoom.getGameRoomKey()).child("playerTwoUID").setValue(firebaseAuth.getCurrentUser().getUid());
+                GameRoom.GAME_ROOMS_REF.child(gameRoom.getGameRoomKey()).child("gameRoomStatus").addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         String snapshotData = snapshot.getValue(String.class);
                         if (snapshotData != null) {
-                            if (snapshotData.equals(GameRoom.ROOM_CREATED_STATE)) {
+                            if (snapshotData.equals(GameRoom.FULL_GAME_ROOM)) {
                                 intent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, gameRoom.getGameRoomKey());
                                 itemView.getContext().startActivity(intent);
                             }

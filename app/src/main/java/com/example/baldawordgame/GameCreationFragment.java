@@ -2,12 +2,10 @@ package com.example.baldawordgame;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.util.Log;
@@ -15,7 +13,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -23,7 +20,6 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.example.baldawordgame.model.GameRoom;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,19 +27,15 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class GameCreationFragment extends Fragment {
-    public static final String TAG = "GAME_CREATION_FRAGMENT";
+    public static final String TAG = "GameCreationFragment";
 
-    private GameRoom currentGameRoom;
+    private GameRoom createdGameRoom;
+    private DatabaseReference createdGameRoomRef;
+    private ValueEventListener secondPlayerListener;
+    private boolean opponentFounded = false;
 
-    private DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-    private DatabaseReference openRoomsReference = databaseReference.child("openRooms");
-    private DatabaseReference currentGameRoomRef;
-    private ValueEventListener listener;
-
-    private LinearLayout main;
-
+    //region VIEWS
     private ToggleButton buttonGameCreationProceed;
-
     private TextView textViewGameGridFormatLabel;
     private TextView textViewGameTurnTimeLabel;
     private TextView textViewWaitingForOpponentLabel;
@@ -59,12 +51,11 @@ public class GameCreationFragment extends Fragment {
     private RadioButton radioButtonTimerTwoMinutes;
 
     private ProgressBar progressBar;
-
+    //endregion
     private AlphaAnimation alphaAnimation;
-    private boolean opponentFounded = false;
 
+    // Required empty public constructor
     public GameCreationFragment() {
-        // Required empty public constructor
     }
 
     @Override
@@ -73,11 +64,10 @@ public class GameCreationFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_game_creation, container, false);
 
-        init(view);
+        viewsSettings(view);
         Log.d(TAG, "onCreateView() called;");
         return view;
     }
@@ -98,42 +88,6 @@ public class GameCreationFragment extends Fragment {
         Log.d(TAG, "onStop() called;");
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume() called;");
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.d(TAG, "onPause() called;");
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        Log.d(TAG, "onViewCreated() called;");
-    }
-
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        Log.d(TAG, "onAttach() called;");
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        Log.d(TAG, "onDetach() called;");
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "onDestroy() called;");
-    }
-
     private void buttonGameCreationProceedClick() {
         buttonGameCreationProceed.setOnClickListener(event -> {
             if (buttonGameCreationProceed.isChecked()) {
@@ -144,8 +98,7 @@ public class GameCreationFragment extends Fragment {
         });
     }
 
-    private void init(View view) {
-        main = view.findViewById(R.id.main);
+    private void viewsSettings(@NonNull View view) {
         progressBar = view.findViewById(R.id.progressBar);
 
         alphaAnimation = new AlphaAnimation(0, 1);
@@ -204,21 +157,23 @@ public class GameCreationFragment extends Fragment {
                     }
                 });
 
-        currentGameRoomRef = openRoomsReference.push();
-        currentGameRoom = new GameRoom(currentGameRoomRef.getKey(), FirebaseAuth.getInstance().getUid(), getCheckedGridSize(), getCheckedTurnTime());
-        currentGameRoomRef.setValue(currentGameRoom);
+        createdGameRoomRef = GameRoom.GAME_ROOMS_REF.push();
+        createdGameRoom = new GameRoom(createdGameRoomRef.getKey(), User.getPlayerKey(), getSelectedGridSize(), getSelectedTurnTime());
 
-        listener = new ValueEventListener() {
+        createdGameRoomRef.setValue(createdGameRoom);
+
+        secondPlayerListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String dataFromSnapshot = snapshot.getValue(String.class);
                 if (dataFromSnapshot != null) {
-                    currentGameRoomRef.removeEventListener(listener);
+                    createdGameRoomRef.removeEventListener(secondPlayerListener);
                     opponentFounded = true;
-
-                    Intent gameActivityIntent = new Intent(getActivity(), GameActivity.class);
-                    gameActivityIntent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, currentGameRoomRef.getKey());
-                    startActivity(gameActivityIntent);
+                    createdGameRoomRef.child("gameRoomStatus").setValue(GameRoom.FULL_GAME_ROOM).addOnCompleteListener(task -> {
+                        Intent gameActivityIntent = new Intent(getActivity(), GameActivity.class);
+                        gameActivityIntent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, createdGameRoomRef.getKey());
+//                        startActivity(gameActivityIntent);
+                    });
                 }
             }
 
@@ -227,7 +182,7 @@ public class GameCreationFragment extends Fragment {
 
             }
         };
-        currentGameRoomRef.child("playerTwoUID").addValueEventListener(listener);
+        createdGameRoomRef.child("playerTwoUID").addValueEventListener(secondPlayerListener);
     }
 
     private void gameSearchIsStop() {
@@ -258,13 +213,14 @@ public class GameCreationFragment extends Fragment {
                         textViewGameTurnTimeLabel.setVisibility(View.VISIBLE);
                     }
                 });
-        currentGameRoomRef.removeEventListener(listener);
+        createdGameRoomRef.removeEventListener(secondPlayerListener);
+        secondPlayerListener = null;
         if (!opponentFounded) {
-            currentGameRoomRef.removeValue();
+            createdGameRoomRef.removeValue();
         }
     }
 
-    private int getCheckedGridSize() {
+    private int getSelectedGridSize() {
         if (radioButtonThreeOnThree.isChecked()) {
             return 3;
         } else if (radioButtonFiveOnFive.isChecked()) {
@@ -273,7 +229,7 @@ public class GameCreationFragment extends Fragment {
         return 7;
     }
 
-    private long getCheckedTurnTime() {
+    private long getSelectedTurnTime() {
         if (radioButtonTimerThirtySeconds.isChecked()) {
             return (30 * 1000);
         } else if (radioButtonTimerOnMinute.isChecked()) {

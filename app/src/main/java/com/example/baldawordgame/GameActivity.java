@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.regex.Pattern;
 
-public class GameActivity extends AppCompatActivity {
+public class GameActivity extends AppCompatActivity implements Coordinator.MessageReceiver {
 
     private final static String TAG = "GAME_ACTIVITY";
     public final static String CURRENT_GAME_ROOM_KEY = "CURRENT_GAME_ROOM_KEY";
@@ -91,6 +91,7 @@ public class GameActivity extends AppCompatActivity {
         if (state) {
             Log.d(TAG, "INVOKED");
             createGameButtons(gameViewModel.getGameRoom().getGameGridSize());
+            gameViewModel.getCoordinator().subscribeReceiver(GameActivity.this);
             setObservers();
             addTextWatcherToInputReceiver();
             recyclersViewSetting();
@@ -107,16 +108,16 @@ public class GameActivity extends AppCompatActivity {
     private final Observer<String> currentHostLiveDataObserver = new Observer<String>() {
         @Override
         public void onChanged(String currentHostKey) {
-            if (currentHostKey.equals(gameViewModel.getGameRoom().getCurrentHost())) {
-                gameViewModel.getGameRoom().setCurrentHost(currentHostKey);
+            if (currentHostKey.equals(gameViewModel.getGameProcessData().getCurrentHost())) {
+                gameViewModel.getGameProcessData().setCurrentHost(currentHostKey);
             }
         }
     };
     private final Observer<String> keyOfPlayerWhoseTurnLiveDataObserver = new Observer<String>() {
         @Override
         public void onChanged(String keyOfPlayerWhoseTurn) {
-            if (keyOfPlayerWhoseTurn != null && keyOfPlayerWhoseTurn.equals(gameViewModel.getGameRoom().getKeyOfPlayerWhoseTurnIt())) {
-                gameViewModel.getGameRoom().setKeyOfPlayerWhoseTurnIt(keyOfPlayerWhoseTurn);
+            if (keyOfPlayerWhoseTurn != null && keyOfPlayerWhoseTurn.equals(gameViewModel.getGameProcessData().getKeyOfPlayerWhoseTurnIt())) {
+                gameViewModel.getGameProcessData().setKeyOfPlayerWhoseTurnIt(keyOfPlayerWhoseTurn);
             }
         }
     };
@@ -355,4 +356,15 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    private void confirmCombination(){
+//        if(gameViewModel.getGameBoard().isCombinationFull()){
+//            gameViewModel.getGameBoard().getCoordinator()
+//                    .checkCombinedWord(gameViewModel.getGameBoard().makeUpWordFromCombination());
+//        }
+    }
+
+    @Override
+    public void process(Coordinator.Message message) {
+
+    }
 }
