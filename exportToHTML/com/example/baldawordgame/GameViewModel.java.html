@@ -1,0 +1,323 @@
+<html>
+<head>
+<title>GameViewModel.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #c8498d;}
+.s1 { color: #a8afbe;}
+.s2 { color: #a3ccb5;}
+.s3 { color: #54806d;}
+.s4 { color: #ccb86c;}
+.s5 { color: #bb8f73;}
+.s6 { color: #5e946c;}
+</style>
+</head>
+<body bgcolor="#1f1624">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+GameViewModel.java</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span><span class="s1">com.example.baldawordgame</span><span class="s2">;</span>
+
+<span class="s0">import </span><span class="s1">androidx.annotation.NonNull</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">androidx.arch.core.util.Function</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">androidx.lifecycle.LiveData</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">androidx.lifecycle.MutableLiveData</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">androidx.lifecycle.Transformations</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">androidx.lifecycle.ViewModel</span><span class="s2">;</span>
+
+<span class="s0">import </span><span class="s1">com.example.baldawordgame.model.GameProcessData</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">com.google.android.gms.tasks.Task</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">com.google.android.gms.tasks.Tasks</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">com.google.firebase.database.DataSnapshot</span><span class="s2">;</span>
+
+<span class="s0">import </span><span class="s1">java.util.ArrayList</span><span class="s2">;</span>
+
+<span class="s0">public class </span><span class="s1">GameViewModel </span><span class="s0">extends </span><span class="s1">ViewModel {</span>
+
+    <span class="s3">//region LiveData variables</span>
+    <span class="s0">private </span><span class="s1">MutableLiveData&lt;Boolean&gt; dataLoadedStateLiveData = </span><span class="s0">new </span><span class="s1">MutableLiveData&lt;&gt;()</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">LiveData&lt;String&gt; initialWordLiveData</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">LiveData&lt;String&gt; currentHostLiveData</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">LiveData&lt;String&gt; keyOfPlayerWhoseTurnLiveData</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">LiveData&lt;Long&gt; turnTimeLeftInMillisLiveData</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">ArrayList&lt;LiveData&lt;LetterCell&gt;&gt; arrayListOfLetterCellLiveData</span><span class="s2">;</span>
+    <span class="s3">//endregion</span>
+
+    <span class="s3">//region FirebaseQueryLiveData VARIABLES</span>
+    <span class="s0">private </span><span class="s1">FirebaseQueryLiveData initialWordFirebaseQueryLiveData</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">FirebaseQueryLiveData currentHostFirebaseQueryLiveData</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">FirebaseQueryLiveData keyOfPlayerWhoseTurnFirebaseQueryLiveData</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">FirebaseQueryLiveData turnTimeLeftInMillisFirebaseQueryLiveData</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">ArrayList&lt;FirebaseQueryLiveData&gt; arrayListOfFirebaseQueryLiveDataLetterCell</span><span class="s2">;</span>
+    <span class="s3">//endregion</span>
+
+    <span class="s0">private </span><span class="s1">String gameRoomKey</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">GameRoom gameProcessData</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">GameVocabulary gameVocabulary</span><span class="s2">;</span>
+    <span class="s0">private </span><span class="s1">GameBoard gameBoard</span><span class="s2">;</span>
+
+    <span class="s0">public </span><span class="s1">GameViewModel(@NonNull String gameRoomKey) {</span>
+        <span class="s0">this</span><span class="s1">.gameRoomKey = gameRoomKey</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public void </span><span class="s1">dataLoading() {</span>
+        <span class="s1">fetchFirebaseQueryLiveData()</span><span class="s2">;</span>
+        <span class="s1">transformFirebaseQueryLiveDataInLiveData()</span><span class="s2">;</span>
+        <span class="s1">Task&lt;GameRoom&gt; gameRoomFetchingTask = GameRoomAccessor.fetchGameRoom(gameRoomKey)</span><span class="s2">;</span>
+        <span class="s1">Task&lt;ArrayList&lt;FirebaseQueryLiveData&gt;&gt; arrayListOfFirebaseQueryLiveDataCellsFetchingTask</span>
+                <span class="s1">= GameBoardAccessor.fetchArrayListOfFirebaseQueryLiveDataLetterCell(gameRoomKey)</span><span class="s2">;</span>
+        <span class="s1">Tasks.whenAll(gameRoomFetchingTask</span><span class="s4">, </span><span class="s1">arrayListOfFirebaseQueryLiveDataCellsFetchingTask)</span>
+                <span class="s1">.addOnCompleteListener(task -&gt; {</span>
+                    <span class="s1">arrayListOfFirebaseQueryLiveDataLetterCell = arrayListOfFirebaseQueryLiveDataCellsFetchingTask.getResult()</span><span class="s2">;</span>
+                    <span class="s1">arrayListOfLetterCellLiveData = </span><span class="s0">new </span><span class="s1">ArrayList&lt;&gt;()</span><span class="s2">;</span>
+                    <span class="s0">for </span><span class="s1">(FirebaseQueryLiveData firebaseQueryLiveData : arrayListOfFirebaseQueryLiveDataLetterCell) {</span>
+                        <span class="s1">arrayListOfLetterCellLiveData.add(Transformations.map(firebaseQueryLiveData</span><span class="s4">, </span><span class="s0">new </span><span class="s1">LetterCellDeserializer()))</span><span class="s2">;</span>
+                    <span class="s1">}</span>
+                    <span class="s1">gameProcessData = gameRoomFetchingTask.getResult()</span><span class="s2">;</span>
+                    <span class="s1">gameVocabulary = </span><span class="s0">new </span><span class="s1">GameVocabulary()</span><span class="s2">;</span>
+                    <span class="s1">createGameBoard()</span><span class="s2">;</span>
+                    <span class="s1">dataLoadedStateLiveData.setValue(</span><span class="s0">true</span><span class="s1">)</span><span class="s2">;</span>
+                <span class="s1">})</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">private void </span><span class="s1">fetchFirebaseQueryLiveData() {</span>
+        <span class="s1">initialWordFirebaseQueryLiveData = GameVocabularyAccessor.fetchInitialWordFirebaseLiveData(gameRoomKey)</span><span class="s2">;</span>
+        <span class="s1">currentHostFirebaseQueryLiveData = GameRoomAccessor.fetchCurrentHostFirebaseQueryLiveData(gameRoomKey)</span><span class="s2">;</span>
+        <span class="s1">keyOfPlayerWhoseTurnFirebaseQueryLiveData = GameRoomAccessor.fetchKeyOfPlayerFirebaseQueryLiveData(gameRoomKey)</span><span class="s2">;</span>
+        <span class="s1">turnTimeLeftInMillisFirebaseQueryLiveData = GameRoomAccessor.fetchTurnTimeLeftInMillisFirebaseQueryLiveData(gameRoomKey)</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">private void </span><span class="s1">transformFirebaseQueryLiveDataInLiveData() {</span>
+        <span class="s1">initialWordLiveData = Transformations.map(initialWordFirebaseQueryLiveData</span><span class="s4">, </span><span class="s0">new </span><span class="s1">StringDeserializer())</span><span class="s2">;</span>
+        <span class="s1">currentHostLiveData = Transformations.map(currentHostFirebaseQueryLiveData</span><span class="s4">, </span><span class="s0">new </span><span class="s1">StringDeserializer())</span><span class="s2">;</span>
+        <span class="s1">keyOfPlayerWhoseTurnLiveData = Transformations.map(keyOfPlayerWhoseTurnFirebaseQueryLiveData</span><span class="s4">, </span><span class="s0">new </span><span class="s1">StringDeserializer())</span><span class="s2">;</span>
+        <span class="s1">turnTimeLeftInMillisLiveData = Transformations.map(turnTimeLeftInMillisFirebaseQueryLiveData</span><span class="s4">, </span><span class="s0">new </span><span class="s1">LongDeserializer())</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">private void </span><span class="s1">createGameBoard() {</span>
+        <span class="s0">if </span><span class="s1">(gameProcessData != </span><span class="s0">null</span><span class="s1">) {</span>
+            <span class="s0">if </span><span class="s1">(gameProcessData.getGameGridSize() == </span><span class="s5">3</span><span class="s1">) {</span>
+                <span class="s1">gameBoard = </span><span class="s0">new </span><span class="s1">GameBoard(gameProcessData.getGameGridSize())</span><span class="s2">;</span>
+            <span class="s1">} </span><span class="s0">else if </span><span class="s1">(gameProcessData.getGameGridSize() == </span><span class="s5">5</span><span class="s1">) {</span>
+                <span class="s1">gameBoard = </span><span class="s0">new </span><span class="s1">GameBoard(gameProcessData.getGameGridSize())</span><span class="s2">;</span>
+            <span class="s1">} </span><span class="s0">else if </span><span class="s1">(gameProcessData.getGameGridSize() == </span><span class="s5">7</span><span class="s1">) {</span>
+                <span class="s1">gameBoard = </span><span class="s0">new </span><span class="s1">GameBoard(gameProcessData.getGameGridSize())</span><span class="s2">;</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s3">//region GETTERS_AND_SETTERS</span>
+    <span class="s0">public </span><span class="s1">ArrayList&lt;LiveData&lt;LetterCell&gt;&gt; getArrayListOfLetterCellLiveData() {</span>
+        <span class="s0">return </span><span class="s1">arrayListOfLetterCellLiveData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">ArrayList&lt;FirebaseQueryLiveData&gt; getFirebaseLiveDataArrayList() {</span>
+        <span class="s0">return </span><span class="s1">arrayListOfFirebaseQueryLiveDataLetterCell</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">GameRoom getGameRoom() {</span>
+        <span class="s0">return </span><span class="s1">gameProcessData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">GameVocabulary getGameVocabulary() {</span>
+        <span class="s0">return </span><span class="s1">gameVocabulary</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">GameBoard getGameBoard() {</span>
+        <span class="s0">return </span><span class="s1">gameBoard</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">MutableLiveData&lt;Boolean&gt; getDataLoadedStateLiveData() {</span>
+        <span class="s0">return </span><span class="s1">dataLoadedStateLiveData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">LiveData&lt;String&gt; getInitialWordLiveData() {</span>
+        <span class="s0">return </span><span class="s1">initialWordLiveData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">LiveData&lt;String&gt; getCurrentHostLiveData() {</span>
+        <span class="s0">return </span><span class="s1">currentHostLiveData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">LiveData&lt;String&gt; getKeyOfPlayerWhoseTurnLiveData() {</span>
+        <span class="s0">return </span><span class="s1">keyOfPlayerWhoseTurnLiveData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">LiveData&lt;Long&gt; getTurnTimeLeftInMillisLiveData() {</span>
+        <span class="s0">return </span><span class="s1">turnTimeLeftInMillisLiveData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">FirebaseQueryLiveData getInitialWordFirebaseQueryLiveData() {</span>
+        <span class="s0">return </span><span class="s1">initialWordFirebaseQueryLiveData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">FirebaseQueryLiveData getCurrentHostFirebaseQueryLiveData() {</span>
+        <span class="s0">return </span><span class="s1">currentHostFirebaseQueryLiveData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">FirebaseQueryLiveData getKeyOfPlayerWhoseTurnFirebaseQueryLiveData() {</span>
+        <span class="s0">return </span><span class="s1">keyOfPlayerWhoseTurnFirebaseQueryLiveData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">FirebaseQueryLiveData getTurnTimeLeftInMillisFirebaseQueryLiveData() {</span>
+        <span class="s0">return </span><span class="s1">turnTimeLeftInMillisFirebaseQueryLiveData</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s0">public </span><span class="s1">ArrayList&lt;FirebaseQueryLiveData&gt; getArrayListOfFirebaseQueryLiveDataLetterCell() {</span>
+        <span class="s0">return </span><span class="s1">arrayListOfFirebaseQueryLiveDataLetterCell</span><span class="s2">;</span>
+    <span class="s1">}</span>
+
+    <span class="s3">//endregion</span>
+
+    <span class="s3">//region INNER CLASSES</span>
+    <span class="s0">private class </span><span class="s1">LetterCellDeserializer </span><span class="s0">implements </span><span class="s1">Function&lt;DataSnapshot</span><span class="s4">, </span><span class="s1">LetterCell&gt; {</span>
+        <span class="s1">@Override</span>
+        <span class="s0">public </span><span class="s1">LetterCell apply(DataSnapshot dataSnapshot) {</span>
+            <span class="s0">return </span><span class="s1">dataSnapshot.getValue(LetterCell.</span><span class="s0">class</span><span class="s1">)</span><span class="s2">;</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s0">private class </span><span class="s1">StringDeserializer </span><span class="s0">implements </span><span class="s1">Function&lt;DataSnapshot</span><span class="s4">, </span><span class="s1">String&gt; {</span>
+        <span class="s1">@Override</span>
+        <span class="s0">public </span><span class="s1">String apply(DataSnapshot dataSnapshot) {</span>
+            <span class="s0">return </span><span class="s1">dataSnapshot.getValue(String.</span><span class="s0">class</span><span class="s1">)</span><span class="s2">;</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s0">private class </span><span class="s1">LongDeserializer </span><span class="s0">implements </span><span class="s1">Function&lt;DataSnapshot</span><span class="s4">, </span><span class="s1">Long&gt; {</span>
+        <span class="s1">@Override</span>
+        <span class="s0">public </span><span class="s1">Long apply(DataSnapshot dataSnapshot) {</span>
+            <span class="s0">return </span><span class="s1">dataSnapshot.getValue(Long.</span><span class="s0">class</span><span class="s1">)</span><span class="s2">;</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+    <span class="s3">//endregion</span>
+<span class="s1">}</span>
+
+<span class="s6">/* 
+private void createGameBoard() { 
+        if (firebaseLiveDataArrayList != null) { 
+            if (firebaseLiveDataArrayList.size() == 25) { 
+                gameBoard = new GameBoard(5); 
+            } else if (firebaseLiveDataArrayList.size() == 9) { 
+                gameBoard = new GameBoard(3); 
+            } else if (firebaseLiveDataArrayList.size() == 49) { 
+                gameBoard = new GameBoard(7); 
+            } 
+        } 
+    } 
+ */</span>
+
+
+<span class="s6">/* 
+public void prepareData() { 
+        Task&lt;GameRoom&gt; gameRoomFetchingTask = GameRoom.fetchGameRoom(gameRoomKey).addOnCompleteListener(task -&gt; { 
+            gameProcessData = task.getResult();
+            gameProcessData.addListeners();
+        }); 
+ 
+        Task&lt;ArrayList&lt;FirebaseLiveData&gt;&gt; gameBoardFetchingTask = GameBoardAccessor.fetchGameBoard(gameRoomKey) 
+                .addOnCompleteListener(task -&gt; { 
+            firebaseLiveDataArrayList = task.getResult(); 
+            letterCellLiveDataArrayList = new ArrayList&lt;&gt;(); 
+            for (FirebaseLiveData firebaseLiveData : firebaseLiveDataArrayList) { 
+                LiveData&lt;LetterCell&gt; letterCellLiveData = Transformations.map(firebaseLiveData, new Deserializer()); 
+                letterCellLiveDataArrayList.add(letterCellLiveData); 
+            } 
+            createGameBoard(); 
+        }); 
+ 
+        gameVocabulary = new GameVocabulary(gameRoomKey); 
+        gameVocabulary.addListeners(); 
+        gameVocabulary.setInitialWord() 
+ 
+        Tasks.whenAll(gameRoomFetchingTask, gameBoardFetchingTask).addOnCompleteListener(task -&gt; { 
+           Coordinator coordinator = new Coordinator(gameProcessData, gameVocabulary, gameBoard);
+           gameProcessData.setCoordinator(coordinator);
+           gameVocabulary.setCoordinator(coordinator); 
+           gameBoard.setCoordinator(coordinator); 
+        }); 
+    } 
+ 
+    public void prepareGame() { 
+//        Task&lt;GameRoom&gt; gameRoomFetchingTask = GameRoom.fetchGameRoom(gameRoomKey).addOnCompleteListener(gameRoomTask -&gt; { 
+//            gameProcessData = task1.getResult();
+//            gameProcessData.addListeners();
+//            String initialWord = Dictionary.getRandomWordOfACertainLength(gameProcessData.getGameGridSize());
+//            if (initialWord != null) { 
+//                Task&lt;Void&gt; addInitialWordTask = GameVocabularyAccessor.addInitialWord(gameRoomKey, initialWord); 
+//                Task&lt;Void&gt; createGameBoardTask = GameBoardAccessor.createGameBoard(gameRoomKey, gameProcessData.getGameGridSize(), initialWord);
+//                Tasks.whenAll(addInitialWordTask, createGameBoardTask).addOnCompleteListener(tasks -&gt; { 
+//                    Task&lt;ArrayList&lt;FirebaseLiveData&gt;&gt; gameBoardFetchingTask = GameBoardAccessor.fetchGameBoard(gameRoomKey) 
+//                            .addOnCompleteListener(gameBoardTask -&gt; { 
+//                                firebaseLiveDataArrayList = task.getResult(); 
+//                                letterCellLiveDataArrayList = new ArrayList&lt;&gt;(); 
+//                                for (FirebaseLiveData firebaseLiveData : firebaseLiveDataArrayList) { 
+//                                    LiveData&lt;LetterCell&gt; letterCellLiveData = Transformations.map(firebaseLiveData, new Deserializer()); 
+//                                    letterCellLiveDataArrayList.add(letterCellLiveData); 
+//                                } 
+//                                createGameBoard(); 
+//                            }); 
+//                    Task&lt;String&gt; initialWordFetchingTask = GameVocabularyAccessor.fetchInitialWord(gameRoomKey) 
+//                            .addOnCompleteListener(initialWordTask -&gt; { 
+//                                gameVocabulary = new GameVocabulary(gameRoomKey); 
+//                            }); 
+//                }); 
+//            } 
+//        }); 
+    } 
+ 
+ 
+    public void prepareGame() { 
+        Task&lt;GameRoom&gt; gameRoomFetchingTask = GameRoom.fetchGameRoom(gameRoomKey).addOnCompleteListener(task1 -&gt; { 
+            gameProcessData = task1.getResult();
+            gameProcessData.addListeners();
+ 
+            gameVocabulary = new GameVocabulary(gameRoomKey); 
+ 
+            String initialWord = Dictionary.getRandomWordOfACertainLength(gameProcessData.getGameGridSize());
+            if (initialWord != null) { 
+ 
+                gameVocabulary.setInitialWord(initialWord); 
+ 
+                GameBoardAccessor.createGameBoard(gameRoomKey, gameProcessData.getGameGridSize(), initialWord).addOnCompleteListener(task2 -&gt; {
+                    GameBoardAccessor.fetchGameBoard(gameRoomKey).addOnCompleteListener(task3 -&gt; { 
+                        firebaseLiveDataArrayList = task.getResult(); 
+                        letterCellLiveDataArrayList = new ArrayList&lt;&gt;(); 
+                        for (FirebaseLiveData firebaseLiveData : firebaseLiveDataArrayList) { 
+                            LiveData&lt;LetterCell&gt; letterCellLiveData = Transformations.map(firebaseLiveData, new Deserializer()); 
+                            letterCellLiveDataArrayList.add(letterCellLiveData); 
+                        } 
+                        createGameBoard(); 
+                    }); 
+                }); 
+            } 
+        }); 
+    } 
+ 
+ */</span>
+
+<span class="s3">//    public void getData() {</span>
+<span class="s3">//        Task&lt;ArrayList&lt;FirebaseLiveData&gt;&gt; fetchGameBoardTask = GameBoardAccessor.fetchGameBoard(gameRoomKey);</span>
+<span class="s3">//        fetchGameBoardTask.addOnCompleteListener(task -&gt; {</span>
+<span class="s3">//            firebaseLiveDataArrayList = task.getResult();</span>
+<span class="s3">//            letterCellLiveDataArrayList = new ArrayList&lt;&gt;();</span>
+<span class="s3">//            for (FirebaseLiveData firebaseLiveData : firebaseLiveDataArrayList) {</span>
+<span class="s3">//                LiveData&lt;LetterCell&gt; letterCellLiveData = Transformations.map(firebaseLiveData, new Deserializer());</span>
+<span class="s3">//                letterCellLiveDataArrayList.add(letterCellLiveData);</span>
+<span class="s3">//            }</span>
+<span class="s3">//            createGameBoard();</span>
+<span class="s3">//        });</span>
+
+<span class="s3">//        Task&lt;String&gt; fetchInitialWordTask = GameVocabularyAccessor.fetchInitialWord(gameRoomKey);</span>
+<span class="s3">//        fetchInitialWordTask.addOnCompleteListener(task -&gt; {</span>
+<span class="s3">//            String initialWord = task.getResult();</span>
+<span class="s3">//            if(initialWord != null){</span>
+<span class="s3">//                gameVocabulary.setInitialWord(initialWord);</span>
+<span class="s3">//            }</span>
+<span class="s3">//        });</span>
+<span class="s3">//    }</span>
+</pre>
+</body>
+</html>
