@@ -45,19 +45,19 @@ public class GameBoardAccessor {
         });
     }
 
-    public static Task<HashMap<LetterCell, DatabaseReference>> fetchGameBoard(@NonNull String gameRoomKey) {
+    public static Task<HashMap<DatabaseReference, LetterCell>> fetchGameBoard(@NonNull String gameRoomKey) {
         DatabaseReference ref = GAME_BOARDS.child(gameRoomKey);
 
         Task<DataSnapshot> fetchTask = ref.get();
         return fetchTask.continueWith(task -> {
-            HashMap<LetterCell, DatabaseReference> letterCellToRef = new HashMap<>();
+            HashMap<DatabaseReference, LetterCell> letterCellToRef = new HashMap<>();
 
             DataSnapshot snapshot = task.getResult();
             for (DataSnapshot child : snapshot.getChildren()) {
                 LetterCell letterCell = child.getValue(LetterCell.class);
                 DatabaseReference letterCellRef = child.getRef();
 
-                letterCellToRef.put(letterCell, letterCellRef);
+                letterCellToRef.put(letterCellRef, letterCell);
             }
 
             return letterCellToRef;

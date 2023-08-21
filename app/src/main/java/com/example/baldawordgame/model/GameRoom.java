@@ -4,9 +4,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -16,10 +14,12 @@ public class GameRoom {
 
     public static final DatabaseReference GAME_ROOMS_REF = FirebaseDatabase.getInstance().getReference().child("gameRooms");
     private static final String TAG = "GameRoom";
-
     private String gameRoomKey;
-    private String playerOneUID; //The player who created game room;
-    private String playerTwoUID; //The player who connected;
+
+
+
+    private String hostUID; //The player who created game room;
+    private String guestUID; //The player who connected;
     private String gameRoomStatus;
     private int gameGridSize;
     private long turnTimeInMillis;
@@ -30,7 +30,7 @@ public class GameRoom {
 
     public GameRoom(@NonNull String gameRoomKey, @NonNull String roomCreatedUserUID, int gameGridSize, long turnTimeInMillis) {
         this.gameRoomKey = gameRoomKey;
-        this.playerOneUID = roomCreatedUserUID;
+        this.hostUID = roomCreatedUserUID;
         this.gameGridSize = gameGridSize;
         this.turnTimeInMillis = turnTimeInMillis;
         this.gameRoomStatus = GameRoom.OPEN_GAME_ROOM;
@@ -49,16 +49,16 @@ public class GameRoom {
         return gameRoomKey;
     }
 
-    public String getPlayerOneUID() {
-        return playerOneUID;
+    public String getHostUID() {
+        return hostUID;
     }
 
-    public String getPlayerTwoUID() {
-        return playerTwoUID;
+    public String getGuestUID() {
+        return guestUID;
     }
 
-    public void setPlayerTwoUID(@NonNull String playerTwoUID) {
-        this.playerTwoUID = playerTwoUID;
+    public void setGuestUID(@NonNull String guestUID) {
+        this.guestUID = guestUID;
     }
 
     public int getGameGridSize() {
@@ -85,20 +85,20 @@ public class GameRoom {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         GameRoom gameRoom = (GameRoom) o;
-        return gameGridSize == gameRoom.gameGridSize && turnTimeInMillis == gameRoom.turnTimeInMillis && Objects.equals(gameRoomKey, gameRoom.gameRoomKey) && Objects.equals(playerOneUID, gameRoom.playerOneUID) && Objects.equals(playerTwoUID, gameRoom.playerTwoUID);
+        return gameGridSize == gameRoom.gameGridSize && turnTimeInMillis == gameRoom.turnTimeInMillis && Objects.equals(gameRoomKey, gameRoom.gameRoomKey) && Objects.equals(hostUID, gameRoom.hostUID) && Objects.equals(guestUID, gameRoom.guestUID);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(gameRoomKey, playerOneUID, playerTwoUID, gameGridSize, turnTimeInMillis);
+        return Objects.hash(gameRoomKey, hostUID, guestUID, gameGridSize, turnTimeInMillis);
     }
 
     @Override
     public String toString() {
         return "GameRoom{" +
                 "gameRoomKey='" + gameRoomKey + '\'' +
-                ", playerOneUID='" + playerOneUID + '\'' +
-                ", playerTwoUID='" + playerTwoUID + '\'' +
+                ", playerOneUID='" + hostUID + '\'' +
+                ", playerTwoUID='" + guestUID + '\'' +
                 ", gameRoomStatus='" + gameRoomStatus + '\'' +
                 ", gameGridSize=" + gameGridSize +
                 ", turnTimeInMillis=" + turnTimeInMillis +

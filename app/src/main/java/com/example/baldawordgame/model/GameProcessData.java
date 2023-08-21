@@ -3,64 +3,90 @@ package com.example.baldawordgame.model;
 import androidx.annotation.NonNull;
 
 import com.example.baldawordgame.Coordinator;
+import com.example.baldawordgame.FirebaseQueryLiveData;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Exclude;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class GameProcessData {
 
     private final static String TAG = "GameProcessData";
+    private static final DatabaseReference GAME_DATA_REF = FirebaseDatabase.getInstance().getReference().child("gameProcessData");
+
+    private String gameRoomKey;
+
+    private String dataState;
     private String gameState;
-    private long turnTimeLeftInMillis;
-    private String currentHost;
     private String keyOfPlayerWhoseTurnIt;
+    private String guestState;
+    private long turnTimeLeftInMillis;
     private Coordinator coordinator;
 
     public GameProcessData() {
     }
 
-    public GameProcessData(Coordinator coordinator){
+    public GameProcessData(@NonNull String gameRoomKey, @NonNull Coordinator coordinator) {
         this.coordinator = coordinator;
+        this.gameRoomKey = gameRoomKey;
     }
 
-    @NonNull
-    public String getGameState() {
-        return gameState;
+    public FirebaseQueryLiveData getGameStateFirebaseQueryLiveData(){
+        return new FirebaseQueryLiveData(GAME_DATA_REF.child(gameRoomKey).child("gameState"));
     }
 
-    public void setGameState(String gameState) {
-        this.gameState = gameState;
+    public FirebaseQueryLiveData getTurnTimeLeftInMillisFirebaseQueryLiveData(){
+        return new FirebaseQueryLiveData(GAME_DATA_REF.child(gameRoomKey).child("turnTimeLeftInMillis"));
     }
 
-    public long getTurnTimeLeftInMillis() {
-        return turnTimeLeftInMillis;
+    public FirebaseQueryLiveData getKeyOfPlayerWhoseTurnItFirebaseQueryLiveData(){
+        return new FirebaseQueryLiveData(GAME_DATA_REF.child(gameRoomKey).child("keyOfPlayerWhoseTurnIt"));
     }
 
-    public void setTurnTimeLeftInMillis(long turnTimeLeftInMillis) {
-        this.turnTimeLeftInMillis = turnTimeLeftInMillis;
+//    public FirebaseQueryLiveData getGuestStateFirebaseQueryLiveData(){
+//        return new FirebaseQueryLiveData(GAME_DATA_REF.child(gameRoomKey).child("guestState"));
+//    }
+
+    public Task<Void> writeGameState(@NonNull String gameState) {
+        return GAME_DATA_REF.child(gameRoomKey).child("gameState").setValue(gameState);
     }
 
-    public String getCurrentHost() {
-        return currentHost;
+    public Task<Void> writeKeyOfPlayerWhoseTurnIt(@NonNull String hostPlayerKey) {
+        return GAME_DATA_REF.child(gameRoomKey).child("hostPlayerKey").setValue(hostPlayerKey);
     }
 
-    public void setCurrentHost(String currentHost) {
-        this.currentHost = currentHost;
+    public Task<Void> writeTurnTimeLeftInMillis(long turnTimeLeftInMillis) {
+        return GAME_DATA_REF.child(gameRoomKey).child("turnTimeLeftInMillis").setValue(turnTimeLeftInMillis);
     }
 
-    public String getKeyOfPlayerWhoseTurnIt() {
-        return keyOfPlayerWhoseTurnIt;
+    public Task<Void> writeDataState(@NonNull String dataState) {
+        return GAME_DATA_REF.child(gameRoomKey).child("dataState").setValue(dataState);
     }
 
-    public void setKeyOfPlayerWhoseTurnIt(String keyOfPlayerWhoseTurnIt) {
-        this.keyOfPlayerWhoseTurnIt = keyOfPlayerWhoseTurnIt;
+    public Task<Void> writeGuestState(@NonNull String guestState){
+        return GAME_DATA_REF.child(gameRoomKey).child("guestState").setValue(guestState);
+    }
+
+    public void addDataStateValueListener(@NonNull ValueEventListener valueEventListener){
+        GAME_DATA_REF.child(gameRoomKey).child("dataState").addValueEventListener(valueEventListener);
+    }
+
+    public void removeDataStateValueListener(@NonNull ValueEventListener valueEventListener){
+        GAME_DATA_REF.child(gameRoomKey).child("gameState").removeEventListener(valueEventListener);
+    }
+
+    public void addGuestStateValueListener(@NonNull ValueEventListener valueEventListener){
+        GAME_DATA_REF.child(gameRoomKey).child("guestState").addValueEventListener(valueEventListener);
+    }
+
+    public void removeGuestStateValueListener(@NonNull ValueEventListener valueEventListener){
+        GAME_DATA_REF.child(gameRoomKey).child("gameState").removeEventListener(valueEventListener);
     }
 
     @Exclude
     public Coordinator getCoordinator() {
         return coordinator;
-    }
-
-    public void setCoordinator(Coordinator coordinator) {
-        this.coordinator = coordinator;
     }
 
     //region CONSTANTS
@@ -69,7 +95,9 @@ public class GameProcessData {
     @Exclude
     public static final String ROOM_DATA_PREPARING_STATE = "ROOM_DATA_PREPARING_STATE";
     @Exclude
-    public static final String ROOM_DATA_PREPARED_STATE = "ROOM_DATA_PREPARED_STATE";
+    public static final String GUEST_IS_READY = "GUEST_IS_READY";
+    @Exclude
+    public static final String DATA_PREPARED_STATE = "DATA_PREPARED_STATE";
 
     @Exclude
     public static final String GAME_GRID_SIZE_THREE_ON_THREE = "GAME_GRID_SIZE_THREE_ON_THREE";

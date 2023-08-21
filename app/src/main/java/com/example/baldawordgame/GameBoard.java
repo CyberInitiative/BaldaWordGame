@@ -3,27 +3,115 @@ package com.example.baldawordgame;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.databinding.ObservableArrayList;
 
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class GameBoard {
     private static final String TAG = "GameBoard";
+    private static final DatabaseReference GAME_BOARDS = FirebaseDatabase.getInstance().getReference().child("gameBoards");
 
-    private boolean newLetterAddedStatus;
+    private final String gameRoomKey;
     private LetterCell currentLetterCell;
+    private LetterCell intendedLetter;
     private HashMap<DatabaseReference, LetterCell> letterCellToRef;
-    private LinkedList<LetterCell> lettersCombination = new LinkedList<>();
-    private LetterCellCareTaker letterCellCareTaker = new LetterCellCareTaker();
+    private final ObservableArrayList<LetterCell> lettersCombination = new ObservableArrayList<>();
+    private final LetterCellCareTaker letterCellCareTaker = new LetterCellCareTaker();
     private Coordinator coordinator;
 
-    public GameBoard(HashMap<DatabaseReference, LetterCell> letterCellToRef, Coordinator coordinator) {
-        this.letterCellToRef = letterCellToRef;
+    public GameBoard(String gameRoomKey, Coordinator coordinator) {
+        this.gameRoomKey = gameRoomKey;
         this.coordinator = coordinator;
     }
+
+    //region methods to access Firebase data;
+    public Task<Void> writeGameBoard(int gameBoardSize) {
+        DatabaseReference ref = GAME_BOARDS.child(gameRoomKey);
+
+        this.letterCellToRef = new HashMap<>();
+        ArrayList<Task<Void>> tasks = new ArrayList<>();
+
+        for (int i = 0; i < gameBoardSize; i++) { //rows
+            for (int j = 0; j < gameBoardSize; j++) { //columns
+                LetterCell letterCell = new LetterCell(j, i);
+                DatabaseReference letterCellKey = ref.push();
+                letterCellToRef.put(letterCellKey, letterCell);
+
+                Task<Void> setValueTask = letterCellKey.setValue(letterCell);
+                tasks.add(setValueTask);
+            }
+        }
+
+        return Tasks.whenAll(tasks).continueWith(task -> null);
+    }
+
+    public Task<Void> fetchGameBoard() {
+        DatabaseReference ref = GAME_BOARDS.child(gameRoomKey);
+
+        Task<DataSnapshot> fetchTask = ref.get();
+        return fetchTask.continueWith(task -> {
+            HashMap<DatabaseReference, LetterCell> letterCellToRef = new HashMap<>();
+
+            DataSnapshot snapshot = task.getResult();
+            for (DataSnapshot child : snapshot.getChildren()) {
+                LetterCell letterCell = child.getValue(LetterCell.class);
+                DatabaseReference letterCellRef = child.getRef();
+                letterCellToRef.put(letterCellRef, letterCell);
+            }
+            GameBoard.this.letterCellToRef = letterCellToRef;
+            return null;
+        });
+    }
+
+    public Task<Void> updateLetterCell(@NonNull LetterCell cell, @NonNull DatabaseReference cellRef) {
+        DatabaseReference path = FirebaseDatabase.getInstance().getReference().child("gameBoards").child(gameRoomKey);
+
+        Map<String, Object> childUpdates = new HashMap<>();
+        childUpdates.put(cellRef.getKey() + "/letter", cell.getLetter());
+        childUpdates.put(cellRef.getKey() + "/state", cell.getState());
+
+        return path.updateChildren(childUpdates);
+    }
+
+    public Task<Void> writeInitialWordInGameBoard(@NonNull String word) {
+        List<LetterCell> letterCellsToUpdate = new ArrayList<>();
+        List<Task<Void>> tasks = new ArrayList<>();
+        if ((word.length() * word.length()) == letterCellToRef.size()) {
+            int rowPosition = word.length() / 2;
+            List<LetterCell> wordLetterCells = new ArrayList<>();
+            for (int i = 0; i < word.length(); i++) {
+                LetterCell letterCell = getLetterCellByRowAndColumn(rowPosition, i);
+                letterCell.setLetter(String.valueOf(word.charAt(i)));
+                letterCell.setState(LetterCell.LETTER_CELL_WITH_LETTER_STATE);
+                wordLetterCells.add(letterCell);
+            }
+            for (LetterCell letterCell : wordLetterCells) {
+                ArrayList<LetterCell> result = updateAvailableLetterCellsAround(letterCell);
+                letterCellsToUpdate.addAll(result);
+                letterCellsToUpdate.add(letterCell);
+            }
+
+            for (LetterCell letterCell : letterCellsToUpdate) {
+                DatabaseReference letterCellRef = getLetterCellRef(letterCell);
+                Task<Void> task = updateLetterCell(letterCell, letterCellRef);
+
+                tasks.add(task);
+            }
+        }
+        return Tasks.whenAll(tasks).continueWith(task -> null);
+    }
+    //endregion
 
     public static boolean checkIfOneLetterIsCloseToAnother(@NonNull LetterCell currentCell, LetterCell allegedNeighbor) {
         if (allegedNeighbor != null) {
@@ -72,16 +160,34 @@ public class GameBoard {
         return null;
     }
 
+    public ArrayList<LetterCellLiveData> getFirebaseQueryLetterCellLiveData() {
+        ArrayList<LetterCellLiveData> arrayListOfaLetterCellLiveData = new ArrayList<>();
+        for (Map.Entry<DatabaseReference, LetterCell> entry : letterCellToRef.entrySet()) {
+            LetterCellLiveData letterCellLiveData = new LetterCellLiveData(entry.getKey());
+            arrayListOfaLetterCellLiveData.add(letterCellLiveData);
+        }
+        return arrayListOfaLetterCellLiveData;
+    }
+
     public void setIntendedLetterCellAsPartOfCombination(LetterCell letterCell) {
         writeMementoForLetterCell(letterCell);
         letterCell.setStateAndNotifySubscriber(LetterCell.LETTER_CELL_INTENDED_SELECTED_AS_PART_OF_COMBINATION_STATE);
-        lettersCombination.addLast(letterCell);
+        lettersCombination.add(letterCell);
     }
 
     public void setLetterCellAsPartOfCombination(LetterCell letterCell) {
         writeMementoForLetterCell(letterCell);
         letterCell.setStateAndNotifySubscriber(LetterCell.LETTER_CELL_SELECTED_AS_PART_OF_COMBINATION_STATE);
-        lettersCombination.addLast(letterCell);
+        lettersCombination.add(letterCell);
+    }
+
+    public boolean checkIfLetterIsPartOfCombination(int rowIndex, int columnIndex) {
+        for (LetterCell letterCell : lettersCombination) {
+            if (letterCell.getRowIndex() == rowIndex && letterCell.getColumnIndex() == columnIndex) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void writeMementoForLetterCell(@NonNull LetterCell letterCell) {
@@ -96,37 +202,41 @@ public class GameBoard {
         letterCell.getStateFromMemento(memento);
     }
 
-    public void eraseFromCombination(LetterCell targetLetterCell, ShowPanelAdapter showPanelAdapter) {
-        LetterCell letterCell = lettersCombination.getLast();
-        showPanelAdapter.notifyItemRemoved(lettersCombination.indexOf(letterCell));
+    public void eraseFromCombination(LetterCell targetLetterCell) {
+        LetterCell letterCell = lettersCombination.get(lettersCombination.size() - 1);
         lettersCombination.remove(letterCell);
         getMementoForLetterCell(letterCell);
         letterCell.notifySubscriberAboutStateChange();
 
         if (letterCell != targetLetterCell) {
-            eraseFromCombination(targetLetterCell, showPanelAdapter);
+            eraseFromCombination(targetLetterCell);
         }
     }
 
-    public void eraseAllFromCombination(ShowPanelAdapter showPanelAdapter) {
+
+    public Task<Void> writeLetterCell() {
+        List<Task<Void>> tasksList = new ArrayList<>();
+        eraseAllFromCombination();
+        intendedLetter.setState(LetterCell.LETTER_CELL_WITH_LETTER_STATE);
+        tasksList.add(updateLetterCell(intendedLetter, getLetterCellRef(intendedLetter)));
+        ArrayList<LetterCell> updated = updateAvailableLetterCellsAround(intendedLetter);
+        for (LetterCell updatedLetterCell : updated) {
+            tasksList.add(updateLetterCell(updatedLetterCell, getLetterCellRef(updatedLetterCell)));
+        }
+        return Tasks.whenAll(tasksList).continueWithTask(task -> {
+            intendedLetter = null;
+            return null;
+        });
+    }
+
+    public void eraseAllFromCombination() {
         if (!lettersCombination.isEmpty()) {
-            LetterCell letterCell = lettersCombination.getLast();
-            showPanelAdapter.notifyItemRemoved(lettersCombination.indexOf(letterCell));
-            lettersCombination.remove(letterCell);
-            getMementoForLetterCell(letterCell);
-            letterCell.notifySubscriberAboutStateChange();
-
-            eraseAllFromCombination(showPanelAdapter);
+            LetterCell letterCell = lettersCombination.get(0);
+            eraseFromCombination(letterCell);
         }
     }
 
-    public void sendCombination(){
-        if(checkConditions()){
-            coordinator.checkCombinedWord(makeUpWordFromCombination());
-        }
-    }
-
-    public boolean checkConditions() {
+    public boolean checkCombinationConditions() {
         boolean intendedLetterIsHere = false;
         if (!lettersCombination.isEmpty()) {
             for (LetterCell letterCell : lettersCombination) {
@@ -135,24 +245,24 @@ public class GameBoard {
                 }
             }
             if (intendedLetterIsHere) {
-                coordinator.checkCombinedWord(makeUpWordFromCombination());
                 return true;
             }
         }
         return false;
     }
 
-    private String makeUpWordFromCombination() {
+    public String makeUpWordFromCombination() {
         StringBuilder wordBuilder = new StringBuilder();
         for (LetterCell letterCell : lettersCombination) {
             wordBuilder.append(letterCell.getLetter());
         }
-        return wordBuilder.toString();
+        return wordBuilder.toString().trim();
     }
 
-    public void updateAvailableLetterCellsAround(LetterCell letterCell) {
+    public ArrayList<LetterCell> updateAvailableLetterCellsAround(LetterCell letterCell) {
         int currColIndex = letterCell.getColumnIndex();
         int currRowIndex = letterCell.getRowIndex();
+        ArrayList<LetterCell> updatedLetterCells = new ArrayList<>();
 
         LetterCell letterCellFromLeft = getLetterCellByRowAndColumn(currRowIndex, currColIndex - 1);
         if (letterCellFromLeft != null) {
@@ -161,6 +271,7 @@ public class GameBoard {
                         && letterCell.getState().equals(LetterCell.LETTER_CELL_WITH_LETTER_STATE)) {
                     letterCellFromLeft.setState(LetterCell.LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE);
                     letterCellFromLeft.notifySubscriberAboutStateChange();
+                    updatedLetterCells.add(letterCellFromLeft);
                 }
             }
         }
@@ -172,6 +283,7 @@ public class GameBoard {
                         && letterCell.getState().equals(LetterCell.LETTER_CELL_WITH_LETTER_STATE)) {
                     letterCellFromRight.setState(LetterCell.LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE);
                     letterCellFromRight.notifySubscriberAboutStateChange();
+                    updatedLetterCells.add(letterCellFromRight);
                 }
             }
         }
@@ -183,6 +295,7 @@ public class GameBoard {
                         && letterCell.getState().equals(LetterCell.LETTER_CELL_WITH_LETTER_STATE)) {
                     letterCellFromAbove.setState(LetterCell.LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE);
                     letterCellFromAbove.notifySubscriberAboutStateChange();
+                    updatedLetterCells.add(letterCellFromAbove);
                 }
             }
         }
@@ -194,23 +307,21 @@ public class GameBoard {
                         && letterCell.getState().equals(LetterCell.LETTER_CELL_WITH_LETTER_STATE)) {
                     gameCellFromBelow.setState(LetterCell.LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE);
                     gameCellFromBelow.notifySubscriberAboutStateChange();
+                    updatedLetterCells.add(gameCellFromBelow);
                 }
             }
         }
+        return updatedLetterCells;
     }
 
-    public void updateAvailableLetterCells() {
-        for (Map.Entry<DatabaseReference, LetterCell> entry : letterCellToRef.entrySet()) {
-            updateAvailableLetterCellsAround(entry.getValue());
-        }
+    //region getters and setters
+
+    public LetterCell getIntendedLetter() {
+        return intendedLetter;
     }
 
-    public boolean isNewLetterAddedStatus() {
-        return newLetterAddedStatus;
-    }
-
-    public void setNewLetterAddedStatus(boolean newLetterAddedStatus) {
-        this.newLetterAddedStatus = newLetterAddedStatus;
+    public void setIntendedLetter(LetterCell intendedLetter) {
+        this.intendedLetter = intendedLetter;
     }
 
     public LetterCell getCurrentLetterCell() {
@@ -221,7 +332,7 @@ public class GameBoard {
         this.currentLetterCell = currentLetterCell;
     }
 
-    public LinkedList<LetterCell> getLettersCombination() {
+    public ObservableArrayList<LetterCell> getLettersCombination() {
         return lettersCombination;
     }
 
@@ -229,4 +340,8 @@ public class GameBoard {
         return letterCellCareTaker;
     }
 
+    public HashMap<DatabaseReference, LetterCell> getLetterCellToRef() {
+        return letterCellToRef;
+    }
+    //endregion
 }

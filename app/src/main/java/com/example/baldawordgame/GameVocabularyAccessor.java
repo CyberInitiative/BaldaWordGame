@@ -24,6 +24,7 @@ public class GameVocabularyAccessor {
     public static Task<Void> setInitialWord(@NonNull String gameRoomKey, @NonNull String initialWord){
         return GAME_VOCABULARIES.child(gameRoomKey).child("initialWord").setValue(initialWord);
     }
+
     @NonNull
     public static Task<String> fetchInitialWord(@NonNull String gameRoomKey){
         return GAME_VOCABULARIES.child(gameRoomKey).child("initialWord").get().continueWith(task -> {

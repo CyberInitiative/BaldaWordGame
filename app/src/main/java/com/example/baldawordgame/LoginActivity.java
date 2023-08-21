@@ -10,17 +10,16 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private EditText editTextTextEmailAddressLogin;
-    private EditText editTextTextPasswordLogin;
+    private EditText emailEditText;
+    private EditText passwordEditText;
 
     private Button logInBtn;
     private Button signInBtn;
 
-    private FirebaseAuth firebaseAuth;
+    private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,9 +31,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void init() {
-        firebaseAuth = FirebaseAuth.getInstance();
-        editTextTextEmailAddressLogin = findViewById(R.id.editTextTextEmailAddressLogin);
-        editTextTextPasswordLogin = findViewById(R.id.editTextTextPasswordLogin);
+        emailEditText = findViewById(R.id.editTextTextEmailAddressLogin);
+        passwordEditText = findViewById(R.id.editTextTextPasswordLogin);
         logInBtn = findViewById(R.id.logInBtn);
         signInBtn = findViewById(R.id.signUpBtn);
 
@@ -52,16 +50,16 @@ public class LoginActivity extends AppCompatActivity {
         boolean editTextTextEmailAddressLoginIsNotEmpty = false;
         boolean editTextTextPasswordLoginIsNotEmpty = false;
 
-        String email = editTextTextEmailAddressLogin.getText().toString();
-        String password = editTextTextPasswordLogin.getText().toString();
+        String email = emailEditText.getText().toString();
+        String password = passwordEditText.getText().toString();
 
         if (TextUtils.isEmpty(email)) {
-            editTextTextEmailAddressLogin.setError("Поле не может быть пустым!");
+            emailEditText.setError("Поле не может быть пустым!");
         } else {
             editTextTextEmailAddressLoginIsNotEmpty = true;
         }
         if (TextUtils.isEmpty(password)) {
-            editTextTextPasswordLogin.setError("Поле не может быть пустым!");
+            passwordEditText.setError("Поле не может быть пустым!");
         } else {
             editTextTextPasswordLoginIsNotEmpty = true;
         }

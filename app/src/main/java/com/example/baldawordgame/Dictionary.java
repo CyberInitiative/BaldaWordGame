@@ -19,27 +19,21 @@ public class Dictionary {
 
     //Подавление создания конструктора по умолчанию
     //для достижения неинстанцируемости
-    private Dictionary(){
-        throw new AssertionError();
-    }
+    private Dictionary() {throw new AssertionError();}
 
-    public static Task<DataSnapshot> loadDictionaryFromFirebase() {
-        Task<DataSnapshot> dictionaryTask = FirebaseDatabase.getInstance().getReference().child("dictionary").get();
-        dictionaryTask.continueWith(new Continuation<DataSnapshot, Void>() {
-            @Override
-            public Void then(@NonNull Task<DataSnapshot> task) throws Exception {
-                if (task.isSuccessful()) {
+    public static Task<Void> loadDictionaryFromFirebase() {
+        Task<Void> loadDictionaryTask = FirebaseDatabase.getInstance().getReference().child("dictionary").get()
+                .continueWith(task -> {
                     for (DataSnapshot dataSnapshot : task.getResult().getChildren()) {
                         String data = dataSnapshot.getValue(String.class);
                         if (data != null) {
-                            dictionaryArrayList.add(data);
+                            dictionaryArrayList.add(data.toLowerCase().trim());
                         }
                     }
-                }
-                return null;
-            }
-        });
-        return dictionaryTask;
+                    Log.d(TAG, "dictionary size is: " + dictionaryArrayList.size());
+                    return null;
+                });
+        return loadDictionaryTask ;
     }
 
     public static String getRandomWordOfACertainLength(int wordLength) {
@@ -63,7 +57,10 @@ public class Dictionary {
     }
 
     public static boolean checkIfWordIsInDictionary(String word) {
-        return dictionaryArrayList.contains(word);
+        if(dictionaryArrayList.contains(word.toLowerCase())){
+            return true;
+        }
+        return false;
     }
 
 }

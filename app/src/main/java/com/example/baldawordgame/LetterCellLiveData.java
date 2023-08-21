@@ -17,13 +17,9 @@ public class LetterCellLiveData extends LiveData<LetterCell> {
     private class MyValueEventListener implements ValueEventListener {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            Log.d(TAG, "Listening to query " + query);
             LetterCell letterCell = dataSnapshot.getValue(LetterCell.class);
-            previousSnapshot = LetterCellLiveData.this.getValue();
             if (letterCell != null) {
-                if (!letterCell.equals(previousSnapshot)) {
-                    LetterCellLiveData.this.setValue(letterCell);
-                }
+                LetterCellLiveData.this.setValue(letterCell);
             }
         }
 
@@ -33,7 +29,6 @@ public class LetterCellLiveData extends LiveData<LetterCell> {
         }
     }
 
-    private LetterCell previousSnapshot;
     private final Query query;
     private final LetterCellLiveData.MyValueEventListener listener = new LetterCellLiveData.MyValueEventListener();
 
@@ -63,10 +58,6 @@ public class LetterCellLiveData extends LiveData<LetterCell> {
                 "query=" + query +
                 ", listener=" + listener +
                 '}';
-    }
-
-    public LetterCell getPreviousSnapshot() {
-        return previousSnapshot;
     }
 
 }

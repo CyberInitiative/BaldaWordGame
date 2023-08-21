@@ -1,9 +1,8 @@
 package com.example.baldawordgame;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.arch.core.util.Function;
+import androidx.databinding.ObservableArrayList;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
@@ -11,175 +10,160 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.baldawordgame.model.GameProcessData;
 import com.example.baldawordgame.model.GameRoom;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class GameViewModel extends ViewModel {
 
     private static final String TAG = "GameViewModel";
 
-    //region LiveData variables
-    private MutableLiveData<Boolean> dataLoadedStateLiveData = new MutableLiveData<>();
-    private LiveData<String> initialWordLiveData;
-    private LiveData<String> currentHostLiveData;
-    private LiveData<String> keyOfPlayerWhoseTurnLiveData;
+    //region FirebaseQueryLiveData objects
+    private FirebaseQueryLiveData gameStateFirebaseQueryLiveData;
+    private FirebaseQueryLiveData keyOfPlayerWhoseTurnItFirebaseQueryLiveData;
+    private FirebaseQueryLiveData turnTimeLeftInMillisFirebaseQueryLiveData;
+    //endregion
+
+    //region LiveData objects
+    private LiveData<String> gameStateLiveData;
+    private LiveData<String> keyOfPlayerWhoseTurnItLiveData;
     private LiveData<Long> turnTimeLeftInMillisLiveData;
     //endregion
 
-    //region FirebaseQueryLiveData VARIABLES
-    private FirebaseQueryLiveData initialWordFirebaseQueryLiveData;
-    private FirebaseQueryLiveData currentHostFirebaseQueryLiveData;
-    private FirebaseQueryLiveData keyOfPlayerWhoseTurnFirebaseQueryLiveData;
-    private FirebaseQueryLiveData turnTimeLeftInMillisFirebaseQueryLiveData;
+    private MutableLiveData<Boolean> dataLoadedStateLiveData = new MutableLiveData<>();
     private ArrayList<LetterCellLiveData> arrayListOfLetterCellLiveData;
-    //endregion
 
     private Coordinator coordinator;
+    private GameRoom gameRoom;
+    private GameProcessData gameProcessData;
+    private GameBoard gameBoard;
+    private GameVocabulary gameVocabulary;
+
+    private void hostGameSetting() {
+        String randomWord = Dictionary.getRandomWordOfACertainLength(gameRoom.getGameGridSize());
+        gameVocabulary.writeInitialWord(randomWord)
+                .continueWithTask(task -> gameBoard.writeGameBoard(gameRoom.getGameGridSize()))
+                .continueWithTask(task -> gameBoard.writeInitialWordInGameBoard(gameVocabulary.getInitialWord()))
+                .continueWithTask(task -> {
+                    arrayListOfLetterCellLiveData = gameBoard.getFirebaseQueryLetterCellLiveData();
+                    return gameProcessData.writeDataState(GameProcessData.DATA_PREPARED_STATE);
+                })
+                .addOnCompleteListener(task -> {
+                    ValueEventListener valueEventListener = new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            String data = snapshot.getValue(String.class);
+                            if (data != null && data.equals(GameProcessData.GUEST_IS_READY)) {
+                                gameProcessData.removeGuestStateValueListener(this);
+                                dataLoadedStateLiveData.setValue(true);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    };
+
+                    gameProcessData.addGuestStateValueListener(valueEventListener);
+
+                });
+    }
+
+    private void guestGameSetting() {
+        ValueEventListener valueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String data = snapshot.getValue(String.class);
+                if (data != null && data.equals(GameProcessData.DATA_PREPARED_STATE)) {
+                    gameVocabulary.fetchInitialWord()
+                            .continueWithTask(task -> gameBoard.fetchGameBoard())
+                            .continueWithTask(task -> {
+                                arrayListOfLetterCellLiveData = gameBoard.getFirebaseQueryLetterCellLiveData();
+                                return gameProcessData.writeGuestState(GameProcessData.GUEST_IS_READY);
+                            })
+                            .addOnCompleteListener(task -> dataLoadedStateLiveData.setValue(true));
+                    gameProcessData.removeDataStateValueListener(this);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        };
+        gameProcessData.addDataStateValueListener(valueEventListener);
+    }
 
     public GameViewModel(@NonNull String gameRoomKey) {
         coordinator = new Coordinator();
-        Task<GameRoom> fetchGameRoomTask = GameRoom.fetchGameRoom(gameRoomKey);
-        fetchGameRoomTask.continueWithTask(task -> {
-                    GameRoom gameRoom = task.getResult();
-                    coordinator.setGameRoom(gameRoom);
-                    return GameBoardAccessor.writeGameBoard(gameRoomKey, gameRoom.getGameGridSize());
-                }).continueWith(task -> {
-                    HashMap<DatabaseReference, LetterCell> refToLetterCell = task.getResult();
+        GameRoom.fetchGameRoom(gameRoomKey).addOnCompleteListener(task -> {
+            gameRoom = task.getResult();
+            gameBoard = new GameBoard(gameRoomKey, coordinator);
+            gameVocabulary = new GameVocabulary(gameRoomKey, coordinator);
+            gameProcessData = new GameProcessData(gameRoomKey, coordinator);
 
-                    GameProcessData gameProcessData = new GameProcessData(coordinator);
-                    GameBoard gameBoard = new GameBoard(refToLetterCell, coordinator);
-                    GameVocabulary gameVocabulary = new GameVocabulary(coordinator);
+            coordinator.setGameProcessData(gameProcessData);
+            coordinator.setGameVocabulary(gameVocabulary);
+            coordinator.setGameBoard(gameBoard);
 
-                    coordinator.setGameProcessData(gameProcessData);
-                    coordinator.setGameBoard(gameBoard);
-                    coordinator.setGameVocabulary(gameVocabulary);
+            gameStateFirebaseQueryLiveData = gameProcessData.getGameStateFirebaseQueryLiveData();
+            turnTimeLeftInMillisFirebaseQueryLiveData = gameProcessData.getTurnTimeLeftInMillisFirebaseQueryLiveData();
+            keyOfPlayerWhoseTurnItFirebaseQueryLiveData = gameProcessData.getKeyOfPlayerWhoseTurnItFirebaseQueryLiveData();
 
-                    arrayListOfLetterCellLiveData = createArrayListOfFirebaseQueryLetterCellLiveData(refToLetterCell);
-                    return null;
-                }).continueWithTask(task -> {
-                    String randomWord = Dictionary.getRandomWordOfACertainLength(getGameRoom().getGameGridSize());
-                    coordinator.getGameVocabulary().setInitialWord(randomWord);
-                    return GameVocabularyAccessor.setInitialWord(gameRoomKey, randomWord);
-                })
-                .continueWith(task -> {
-                    List<Task<Void>> writingLettersTask = writeInitialWordInGameBoard(coordinator.getGameVocabulary().getInitialWord());
-                    return Tasks.whenAll(writingLettersTask);
-                })
-                .addOnCompleteListener(tasks -> dataLoadedStateLiveData.setValue(true));
-    }
+            gameStateLiveData = Transformations.map(gameStateFirebaseQueryLiveData, new StringDeserializer());
+            turnTimeLeftInMillisLiveData = Transformations.map(turnTimeLeftInMillisFirebaseQueryLiveData, new LongDeserializer());
+            keyOfPlayerWhoseTurnItLiveData = Transformations.map(keyOfPlayerWhoseTurnItFirebaseQueryLiveData, new StringDeserializer());
 
-    private ArrayList<LetterCellLiveData> createArrayListOfFirebaseQueryLetterCellLiveData
-            (@NonNull HashMap<DatabaseReference, LetterCell> letterCellToRef) {
-        ArrayList<LetterCellLiveData> arrayListOfaLetterCellLiveData = new ArrayList<>();
-        for (Map.Entry<DatabaseReference, LetterCell> entry : letterCellToRef.entrySet()) {
-            LetterCellLiveData letterCellLiveData = new LetterCellLiveData(entry.getKey());
-            arrayListOfaLetterCellLiveData.add(letterCellLiveData);
-        }
-        return arrayListOfaLetterCellLiveData;
-    }
-
-    private List<Task<Void>> writeInitialWordInGameBoard(@NonNull String word) {
-        Log.d(TAG, "writeInitialWordInGameBoard(); word is: " + word);
-        Log.d(TAG, "writeInitialWordInGameBoard(); gameRoom.getGameGridSize(): " + getGameRoom().getGameGridSize());
-        if (word.length() == getGameRoom().getGameGridSize()) {
-            List<Task<Void>> tasks = new ArrayList<>();
-            int rowPosition = getGameRoom().getGameGridSize() / 2;
-            for (int i = 0; i < getGameRoom().getGameGridSize(); i++) {
-                Log.d(TAG, "LOOP: " + i + " size: " + getGameRoom().getGameGridSize());
-                LetterCell letterCell = getGameBoard().getLetterCellByRowAndColumn(rowPosition, i);
-                DatabaseReference letterCellRef = getGameBoard().getLetterCellRef(letterCell);
-
-                Log.d(TAG, "REF: " + letterCellRef);
-                letterCell.setLetter(String.valueOf(word.charAt(i)));
-                letterCell.setState(LetterCell.LETTER_CELL_WITH_LETTER_STATE);
-
-                Task<Void> task = GameBoardAccessor.updateLetterCell(letterCell, getGameRoom().getGameRoomKey(), letterCellRef);
-
-                tasks.add(task);
+            if (gameRoom.getHostUID().equals(User.getPlayerKey())) {
+                hostGameSetting();
+            } else if (gameRoom.getGuestUID().equals(User.getPlayerKey())) {
+                guestGameSetting();
             }
-            Log.d(TAG, "writeInitialWordInGameBoard(); returning tasks; size: " + tasks.size());
-            return tasks;
-        }
-        return null;
+
+        });
     }
 
-    public void prepareDataOnCreationStage() {
-//        GameRoomAccessor.fetchGameRoom(gameRoomKey)
-//                .continueWithTask(task -> {
-//                    gameRoom = task.getResult();
-//                    gameVocabulary = new GameVocabulary();
-//                    createGameBoard();
-//                    return GameBoardAccessor.writeGameBoard(gameRoomKey, gameRoom.getGameGridSize());
-//                })
-//                .continueWith(task -> {
-//                    gameBoardChangeListener = new ValueEventListener() {
-//                        @Override
-//                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                            ArrayList<LetterCell> letterCellsSnapshot = new ArrayList<>();
-//
-//                            for (DataSnapshot snapshotChild : snapshot.getChildren()) {
-//                                LetterCell letterCell = snapshotChild.getValue(LetterCell.class);
-//                                letterCellsSnapshot.add(letterCell);
-//                            }
-//
-//                            gameBoard.compareSnapshots(letterCellsSnapshot);
-//                        }
-//
-//                        @Override
-//                        public void onCancelled(@NonNull DatabaseError error) {
-//
-//                        }
-//                    };
-//
-//                    FirebaseDatabase.getInstance().getReference().child("gameBoards").child(gameRoomKey).addValueEventListener(gameBoardChangeListener);
-//                    return null;
-//                }).continueWithTask(task -> {
-//                    String pickedWord = Dictionary.getRandomWordOfACertainLength(gameRoom.getGameGridSize());
-//                    gameVocabulary.setInitialWord(pickedWord);
-//                    return GameVocabularyAccessor.setInitialWord(gameRoomKey, pickedWord);
-//                }).addOnCompleteListener(task -> {
-//                    Tasks.whenAll(writeInitialWordInGameBoard(gameVocabulary.getInitialWord())).addOnCompleteListener(task1 -> {
-//                        dataLoadedStateLiveData.setValue(true);
-//                    });
-//                });
+    public void confirmCombination() {
+        coordinator.confirmCombination();
     }
 
-    private void fetchFirebaseQueryLiveData() {
-        initialWordFirebaseQueryLiveData = GameVocabularyAccessor.fetchInitialWordFirebaseLiveData(getGameRoom().getGameRoomKey());
-        currentHostFirebaseQueryLiveData = GameProcessDataAccessor.fetchCurrentHostFirebaseQueryLiveData(getGameRoom().getGameRoomKey());
-        keyOfPlayerWhoseTurnFirebaseQueryLiveData = GameProcessDataAccessor.fetchKeyOfPlayerFirebaseQueryLiveData(getGameRoom().getGameRoomKey());
-        turnTimeLeftInMillisFirebaseQueryLiveData = GameProcessDataAccessor.fetchTurnTimeLeftInMillisFirebaseQueryLiveData(getGameRoom().getGameRoomKey());
+    public ObservableArrayList<FoundedWord> getOpponentsVocabulary(){
+        return gameVocabulary.getOpponentsVocabulary();
     }
 
-    private void transformFirebaseQueryLiveDataInLiveData() {
-        initialWordLiveData = Transformations.map(initialWordFirebaseQueryLiveData, new StringDeserializer());
-        currentHostLiveData = Transformations.map(currentHostFirebaseQueryLiveData, new StringDeserializer());
-        keyOfPlayerWhoseTurnLiveData = Transformations.map(keyOfPlayerWhoseTurnFirebaseQueryLiveData, new StringDeserializer());
-        turnTimeLeftInMillisLiveData = Transformations.map(turnTimeLeftInMillisFirebaseQueryLiveData, new LongDeserializer());
+    public ObservableArrayList<FoundedWord> getPlayersVocabulary(){
+        return gameVocabulary.getPlayersVocabulary();
+    }
+
+    public ObservableArrayList<LetterCell> getLettersCombination(){
+        return gameBoard.getLettersCombination();
+    }
+
+    public void turnOnVocabularyListener(DictionaryAdapter userAdapter, DictionaryAdapter opponentAdapter){
+        gameVocabulary.turnOnVocabularyListener(userAdapter, opponentAdapter);
+    }
+
+    public void turnOffVocabularyListener(){
+        gameVocabulary.turnOffVocabularyListener();
     }
 
     //region GETTERS_AND_SETTERS
     public GameProcessData getGameProcessData() {
-        return coordinator.getGameProcessData();
+        return gameProcessData;
     }
 
     public GameRoom getGameRoom() {
-        return coordinator.getGameRoom();
+        return gameRoom;
     }
 
     public GameVocabulary getGameVocabulary() {
-        return coordinator.getGameVocabulary();
+        return gameVocabulary;
     }
 
     public GameBoard getGameBoard() {
-        return coordinator.getGameBoard();
+        return gameBoard;
     }
 
     public MutableLiveData<Boolean> getDataLoadedStateLiveData() {
@@ -194,36 +178,28 @@ public class GameViewModel extends ViewModel {
         return coordinator;
     }
 
-    public LiveData<String> getInitialWordLiveData() {
-        return initialWordLiveData;
+    public FirebaseQueryLiveData getGameStateFirebaseQueryLiveData() {
+        return gameStateFirebaseQueryLiveData;
     }
 
-    public LiveData<String> getCurrentHostLiveData() {
-        return currentHostLiveData;
-    }
-
-    public LiveData<String> getKeyOfPlayerWhoseTurnLiveData() {
-        return keyOfPlayerWhoseTurnLiveData;
-    }
-
-    public LiveData<Long> getTurnTimeLeftInMillisLiveData() {
-        return turnTimeLeftInMillisLiveData;
-    }
-
-    public FirebaseQueryLiveData getInitialWordFirebaseQueryLiveData() {
-        return initialWordFirebaseQueryLiveData;
-    }
-
-    public FirebaseQueryLiveData getCurrentHostFirebaseQueryLiveData() {
-        return currentHostFirebaseQueryLiveData;
-    }
-
-    public FirebaseQueryLiveData getKeyOfPlayerWhoseTurnFirebaseQueryLiveData() {
-        return keyOfPlayerWhoseTurnFirebaseQueryLiveData;
+    public FirebaseQueryLiveData getKeyOfPlayerWhoseTurnItFirebaseQueryLiveData() {
+        return keyOfPlayerWhoseTurnItFirebaseQueryLiveData;
     }
 
     public FirebaseQueryLiveData getTurnTimeLeftInMillisFirebaseQueryLiveData() {
         return turnTimeLeftInMillisFirebaseQueryLiveData;
+    }
+
+    public LiveData<String> getGameStateLiveData() {
+        return gameStateLiveData;
+    }
+
+    public LiveData<String> getKeyOfPlayerWhoseTurnItLiveData() {
+        return keyOfPlayerWhoseTurnItLiveData;
+    }
+
+    public LiveData<Long> getTurnTimeLeftInMillisLiveData() {
+        return turnTimeLeftInMillisLiveData;
     }
 
     //endregion
@@ -243,4 +219,61 @@ public class GameViewModel extends ViewModel {
         }
     }
     //endregion
+
 }
+
+//        GameRoom.fetchGameRoom(gameRoomKey).continueWith(task ->{
+//            gameRoom = task.getResult();
+//
+//            gameVocabulary = new GameVocabulary(gameRoomKey, coordinator);
+//            gameProcessData = new GameProcessData(gameRoomKey, coordinator);
+//            gameBoard = new GameBoard(gameRoomKey, coordinator);
+//
+//            if(gameRoom.getHostUID().equals(User.getPlayerKey())){
+//                String randomWord = Dictionary.getRandomWordOfACertainLength(gameRoom.getGameGridSize());
+//                gameVocabulary.writeInitialWord(randomWord);
+//                return GameVocabularyAccessor.setInitialWord(gameRoomKey, randomWord);
+//
+//            } else if (gameRoom.getGuestUID().equals(User.getPlayerKey())) {
+//
+//            }
+//
+//            return null;
+//        });
+
+//        GameRoom.fetchGameRoom(gameRoomKey)
+//                .continueWith(task -> {
+//                    gameRoom = task.getResult();
+//                    coordinator.setGameRoom(gameRoom);
+//                    return null;
+//                })
+//                .continueWithTask(task -> {
+//                    gameBoard = new GameBoard(gameRoomKey, coordinator);
+//                    if (gameRoom.getHostUID().equals(User.getPlayerKey())) {
+//                        return gameBoard.writeGameBoard(gameRoom.getGameGridSize());
+//                    } else {
+//                        return gameBoard.fetchGameBoard();
+//                    }
+//                })
+//                .continueWith(task -> {
+//
+//                    gameVocabulary = new GameVocabulary(gameRoomKey, coordinator);
+//                    gameProcessData = new GameProcessData(gameRoomKey, coordinator);
+//
+//                    coordinator.setGameBoard(gameBoard);
+//                    coordinator.setGameVocabulary(gameVocabulary);
+//                    coordinator.setGameProcessData(gameProcessData);
+//
+//                    arrayListOfLetterCellLiveData = gameBoard.getFirebaseQueryLetterCellLiveData();
+//                    return null;
+//                })
+//                .continueWithTask(task -> {
+//                    if (gameRoom.getHostUID().equals(User.getPlayerKey())) {
+//                        String randomWord = Dictionary.getRandomWordOfACertainLength(gameRoom.getGameGridSize());
+//                        return gameVocabulary.writeInitialWord(randomWord);
+//                    } else {
+//                        return null;
+//                    }
+//                })
+//                .continueWithTask(task -> gameBoard.writeInitialWordInGameBoard(gameVocabulary.getInitialWord()))
+//                .addOnCompleteListener(tasks -> dataLoadedStateLiveData.setValue(true));

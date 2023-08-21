@@ -1,14 +1,5 @@
 package com.example.baldawordgame;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -24,13 +15,23 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.databinding.ObservableArrayList;
+import androidx.databinding.ObservableList;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.firebase.database.DatabaseReference;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Map;
 import java.util.regex.Pattern;
 
-public class GameActivity extends AppCompatActivity implements Coordinator.MessageReceiver {
+public class GameActivity extends AppCompatActivity {
 
     private final static String TAG = "GAME_ACTIVITY";
     public final static String CURRENT_GAME_ROOM_KEY = "CURRENT_GAME_ROOM_KEY";
@@ -76,7 +77,7 @@ public class GameActivity extends AppCompatActivity implements Coordinator.Messa
                 gameViewModel.getGameBoard().getCurrentLetterCell().notifySubscriberAboutStateChange();
                 gameViewModel.getGameBoard().getCurrentLetterCell().notifySubscriberAboutLetterChange();
 
-                gameViewModel.getGameBoard().setNewLetterAddedStatus(true);
+                gameViewModel.getGameBoard().setIntendedLetter(gameViewModel.getGameBoard().getCurrentLetterCell());
                 gameViewModel.getGameBoard().setCurrentLetterCell(null);
 
                 imm.hideSoftInputFromWindow(inputReceiver.getWindowToken(), 0);
@@ -91,36 +92,129 @@ public class GameActivity extends AppCompatActivity implements Coordinator.Messa
         if (state) {
             Log.d(TAG, "INVOKED");
             createGameButtons(gameViewModel.getGameRoom().getGameGridSize());
-            gameViewModel.getCoordinator().subscribeReceiver(GameActivity.this);
             setObservers();
             addTextWatcherToInputReceiver();
             recyclersViewSetting();
+            gameViewModel.turnOnVocabularyListener(playerDictionaryAdapter, opponentDictionaryAdapter);
+            gameViewModel.getPlayersVocabulary().addOnListChangedCallback(new ObservableList.OnListChangedCallback() {
+                @Override
+                public void onChanged(ObservableList sender) {
+
+                }
+
+                @Override
+                public void onItemRangeChanged(ObservableList sender, int positionStart, int itemCount) {
+
+                }
+
+                @Override
+                public void onItemRangeInserted(ObservableList sender, int positionStart, int itemCount) {
+                    Log.d(TAG, "positionStart: " + positionStart + "; itemCount: " + itemCount);
+                    for(int i = positionStart; i < (positionStart + itemCount); i++){
+                        playerDictionaryAdapter.notifyItemInserted(i);
+                    }
+                }
+
+                @Override
+                public void onItemRangeMoved(ObservableList sender, int fromPosition, int toPosition, int itemCount) {
+
+                }
+
+                @Override
+                public void onItemRangeRemoved(ObservableList sender, int positionStart, int itemCount) {
+                    for(int i = positionStart; i < (positionStart + itemCount); i++){
+                        playerDictionaryAdapter.notifyItemRemoved(i);
+                    }
+                }
+            });
+            gameViewModel.getOpponentsVocabulary().addOnListChangedCallback(new ObservableList.OnListChangedCallback() {
+                @Override
+                public void onChanged(ObservableList sender) {
+
+                }
+
+                @Override
+                public void onItemRangeChanged(ObservableList sender, int positionStart, int itemCount) {
+
+                }
+
+                @Override
+                public void onItemRangeInserted(ObservableList sender, int positionStart, int itemCount) {
+                    for(int i = positionStart; i < (positionStart + itemCount); i++){
+                        opponentDictionaryAdapter.notifyItemInserted(i);
+                    }
+                }
+
+                @Override
+                public void onItemRangeMoved(ObservableList sender, int fromPosition, int toPosition, int itemCount) {
+
+                }
+
+                @Override
+                public void onItemRangeRemoved(ObservableList sender, int positionStart, int itemCount) {
+                    for(int i = positionStart; i < (positionStart + itemCount); i++){
+                        opponentDictionaryAdapter.notifyItemRemoved(i);
+                    }
+                }
+            });
+            gameViewModel.getLettersCombination().addOnListChangedCallback(new ObservableList.OnListChangedCallback() {
+                @Override
+                public void onChanged(ObservableList sender) {
+
+                }
+
+                @Override
+                public void onItemRangeChanged(ObservableList sender, int positionStart, int itemCount) {
+
+                }
+
+                @Override
+                public void onItemRangeInserted(ObservableList sender, int positionStart, int itemCount) {
+                    for(int i = positionStart; i < (positionStart + itemCount); i++){
+                        showPanelAdapter.notifyItemInserted(i);
+                    }
+                }
+
+                @Override
+                public void onItemRangeMoved(ObservableList sender, int fromPosition, int toPosition, int itemCount) {
+
+                }
+
+                @Override
+                public void onItemRangeRemoved(ObservableList sender, int positionStart, int itemCount) {
+                    for(int i = positionStart; i < (positionStart + itemCount); i++){
+                        showPanelAdapter.notifyItemRemoved(i);
+                    }
+                }
+            });
+
         }
     };
-    private final Observer<String> initialWordLiveDataObserver = new Observer<String>() {
-        @Override
-        public void onChanged(String initialWord) {
-            if (initialWord != null && !initialWord.equals(gameViewModel.getGameVocabulary().getInitialWord())) {
-                gameViewModel.getGameVocabulary().setInitialWord(initialWord);
-            }
-        }
-    };
-    private final Observer<String> currentHostLiveDataObserver = new Observer<String>() {
-        @Override
-        public void onChanged(String currentHostKey) {
-            if (currentHostKey.equals(gameViewModel.getGameProcessData().getCurrentHost())) {
-                gameViewModel.getGameProcessData().setCurrentHost(currentHostKey);
-            }
-        }
-    };
-    private final Observer<String> keyOfPlayerWhoseTurnLiveDataObserver = new Observer<String>() {
-        @Override
-        public void onChanged(String keyOfPlayerWhoseTurn) {
-            if (keyOfPlayerWhoseTurn != null && keyOfPlayerWhoseTurn.equals(gameViewModel.getGameProcessData().getKeyOfPlayerWhoseTurnIt())) {
-                gameViewModel.getGameProcessData().setKeyOfPlayerWhoseTurnIt(keyOfPlayerWhoseTurn);
-            }
-        }
-    };
+
+//    private final Observer<String> initialWordLiveDataObserver = new Observer<String>() {
+//        @Override
+//        public void onChanged(String initialWord) {
+//            if (initialWord != null && !initialWord.equals(gameViewModel.getGameVocabulary().getInitialWord())) {
+//                gameViewModel.getGameVocabulary().writeInitialWord(initialWord);
+//            }
+//        }
+//    };
+//    private final Observer<String> currentHostLiveDataObserver = new Observer<String>() {
+//        @Override
+//        public void onChanged(String currentHostKey) {
+//            if (currentHostKey.equals(gameViewModel.getGameProcessData().getHostPlayerKey())) {
+//                gameViewModel.getGameProcessData().setHostPlayerKey(currentHostKey);
+//            }
+//        }
+//    };
+//    private final Observer<String> keyOfPlayerWhoseTurnLiveDataObserver = new Observer<String>() {
+//        @Override
+//        public void onChanged(String keyOfPlayerWhoseTurn) {
+//            if (keyOfPlayerWhoseTurn != null && keyOfPlayerWhoseTurn.equals(gameViewModel.getGameProcessData().getKeyOfPlayerWhoseTurnIt())) {
+//                gameViewModel.getGameProcessData().setKeyOfPlayerWhoseTurnIt(keyOfPlayerWhoseTurn);
+//            }
+//        }
+//    };
     //endregion
 
     @Override
@@ -168,8 +262,8 @@ public class GameActivity extends AppCompatActivity implements Coordinator.Messa
     }
 
     private void recyclersViewSetting() {
-        playerDictionaryAdapter = new DictionaryAdapter(gameViewModel.getGameVocabulary().getPlayersVocabulary());
-        opponentDictionaryAdapter = new DictionaryAdapter(gameViewModel.getGameVocabulary().getOpponentsVocabulary());
+        playerDictionaryAdapter = new DictionaryAdapter(gameViewModel.getPlayersVocabulary());
+        opponentDictionaryAdapter = new DictionaryAdapter(gameViewModel.getOpponentsVocabulary());
 
         recyclerViewPlayerDictionary.setAdapter(playerDictionaryAdapter);
         recyclerViewOpponentDictionary.setAdapter(opponentDictionaryAdapter);
@@ -210,10 +304,6 @@ public class GameActivity extends AppCompatActivity implements Coordinator.Messa
 
     private void setObservers() {
         Log.d(TAG, "setObservers() INVOKED");
-//        gameViewModel.getInitialWordLiveData().observe(GameActivity.this, initialWordLiveDataObserver);
-//        gameViewModel.getCurrentHostLiveData().observe(GameActivity.this, currentHostLiveDataObserver);
-//        gameViewModel.getKeyOfPlayerWhoseTurnLiveData().observe(GameActivity.this, keyOfPlayerWhoseTurnLiveDataObserver);
-
         for (int i = 0; i < gameViewModel.getArrayListOfLetterCellLiveData().size(); i++) {
             gameViewModel.getArrayListOfLetterCellLiveData().get(i).observe(GameActivity.this, updatedCell -> {
 
@@ -225,12 +315,15 @@ public class GameActivity extends AppCompatActivity implements Coordinator.Messa
                     LetterCell letterCellFromViewModel = gameViewModel.getGameBoard().getLetterCellByRowAndColumn(row, column);
 
                     if (letterCellFromViewModel != null) {
-                        gameViewModel.getGameBoard().writeMementoForLetterCell(letterCellFromViewModel);
+                        if (!gameViewModel.getGameBoard()
+                                .checkIfLetterIsPartOfCombination(letterCellFromViewModel.getRowIndex(), letterCellFromViewModel.getColumnIndex())) {
+                            gameViewModel.getGameBoard().writeMementoForLetterCell(letterCellFromViewModel);
 
-                        Log.d(TAG, "setObservers(); onChanged(); LetterCell updatedCell: " + updatedCell);
-                        letterCellFromViewModel.setStateAndNotifySubscriber(updatedCell.getState());
-                        letterCellFromViewModel.setLetterAndNotifySubscriber(updatedCell.getLetter());
-                        gameViewModel.getGameBoard().updateAvailableLetterCells();
+                            Log.d(TAG, "setObservers(); onChanged(); LetterCell updatedCell: " + updatedCell);
+                            letterCellFromViewModel.setStateAndNotifySubscriber(updatedCell.getState());
+                            letterCellFromViewModel.setLetterAndNotifySubscriber(updatedCell.getLetter());
+                        }
+
                     }
                 }
             });
@@ -256,9 +349,12 @@ public class GameActivity extends AppCompatActivity implements Coordinator.Messa
 
         recyclerViewShowPanel = findViewById(R.id.recyclerViewShowPanel);
         recyclerViewShowPanel.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
+        buttonConfirmCombination.setOnClickListener(click -> gameViewModel.confirmCombination());
     }
 
     private void createGameButtons(int gameGridSize) {
+
         letterCellButtons = new LetterCellButton[gameGridSize][gameGridSize];
         for (int i = 0; i < gameGridSize; i++) { //rows
 
@@ -274,14 +370,13 @@ public class GameActivity extends AppCompatActivity implements Coordinator.Messa
             for (int j = 0; j < gameGridSize; j++) { //columns
 
                 LetterCellButton letterCellButton = new LetterCellButton(this);
+                Log.d(TAG, "created: " + letterCellButton);
                 letterCellButtons[i][j] = letterCellButton;
 
-                Log.d(TAG, "GAME VIEW GAME BOARD: " + gameViewModel.getGameBoard());
                 LetterCell letterCell = gameViewModel
                         .getGameBoard().getLetterCellByRowAndColumn(i, j);
 
                 Log.d(TAG, "createGameButtons(); LetterCell object is: " + letterCell);
-
                 letterCell.addSubscriber(letterCellButton);
                 letterCell.notifySubscriberAboutLetterChange();
                 letterCell.notifySubscriberAboutStateChange();
@@ -311,31 +406,32 @@ public class GameActivity extends AppCompatActivity implements Coordinator.Messa
         if (letterCell.getState().equals(LetterCell.LETTER_CELL_SELECTED_AS_PART_OF_COMBINATION_STATE) ||
                 letterCell.getState().equals(LetterCell.LETTER_CELL_INTENDED_SELECTED_AS_PART_OF_COMBINATION_STATE)) {
 
-            gameViewModel.getGameBoard().eraseFromCombination(letterCell, showPanelAdapter);
+            gameViewModel.getGameBoard().eraseFromCombination(letterCell);
 
         } else if (letterCell.getState().equals(LetterCell.LETTER_CELL_INTENDED_STATE)) {
             gameViewModel.getGameBoard().getMementoForLetterCell(letterCell);
             letterCell.notifySubscriberAboutStateChange();
             letterCell.notifySubscriberAboutLetterChange();
 
-            gameViewModel.getGameBoard().eraseAllFromCombination(showPanelAdapter);
-            gameViewModel.getGameBoard().setNewLetterAddedStatus(false);
+            gameViewModel.getGameBoard().eraseAllFromCombination();
+            gameViewModel.getGameBoard().setIntendedLetter(null);
         }
     }
 
     private void clickHandling(@NonNull LetterCell letterCell) {
-        LinkedList<LetterCell> combination = gameViewModel.getGameBoard().getLettersCombination();
+        ObservableArrayList<LetterCell> combination = gameViewModel.getGameBoard().getLettersCombination();
 
         if (letterCell.getState().equals(LetterCell.LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE)) {
-            if (!gameViewModel.getGameBoard().isNewLetterAddedStatus()) {
+            if (gameViewModel.getGameBoard().getIntendedLetter() == null) {
                 inputReceiver.requestFocus();
                 inputReceiver.setText(null);
                 imm.toggleSoftInputFromWindow(inputReceiver.getApplicationWindowToken(), InputMethodManager.SHOW_FORCED, 0);
                 gameViewModel.getGameBoard().setCurrentLetterCell(letterCell);
             }
         } else if (letterCell.getState().equals(LetterCell.LETTER_CELL_WITH_LETTER_STATE)) {
-            if (gameViewModel.getGameBoard().isNewLetterAddedStatus()) {
-                if (!combination.isEmpty() && GameBoard.checkIfOneLetterIsCloseToAnother(combination.getLast(), letterCell)) {
+            if (gameViewModel.getGameBoard().getIntendedLetter() != null) {
+                if (!combination.isEmpty() &&
+                        GameBoard.checkIfOneLetterIsCloseToAnother(combination.get(combination.size()-1), letterCell)) {
                     gameViewModel.getGameBoard().setLetterCellAsPartOfCombination(letterCell);
                     showPanelAdapter.notifyItemInserted(combination.size() - 1);
                 } else if (combination.isEmpty()) {
@@ -344,7 +440,8 @@ public class GameActivity extends AppCompatActivity implements Coordinator.Messa
                 }
             }
         } else if (letterCell.getState().equals(LetterCell.LETTER_CELL_INTENDED_STATE)) {
-            if (!combination.isEmpty() && GameBoard.checkIfOneLetterIsCloseToAnother(combination.getLast(), letterCell)) {
+            if (!combination.isEmpty() &&
+                    GameBoard.checkIfOneLetterIsCloseToAnother(combination.get(combination.size()-1), letterCell)) {
                 gameViewModel.getGameBoard().setIntendedLetterCellAsPartOfCombination(letterCell);
                 showPanelAdapter.notifyItemInserted(combination.size() - 1);
             } else if (combination.isEmpty()) {
@@ -356,15 +453,12 @@ public class GameActivity extends AppCompatActivity implements Coordinator.Messa
         }
     }
 
-    private void confirmCombination(){
-//        if(gameViewModel.getGameBoard().isCombinationFull()){
-//            gameViewModel.getGameBoard().getCoordinator()
-//                    .checkCombinedWord(gameViewModel.getGameBoard().makeUpWordFromCombination());
-//        }
-    }
-
     @Override
-    public void process(Coordinator.Message message) {
-
+    protected void onDestroy() {
+        for(Map.Entry<DatabaseReference, LetterCell> entry : gameViewModel.getGameBoard().getLetterCellToRef().entrySet()){
+            Log.d(TAG, "subscriber is: " + entry.getValue().getSubscriber());
+            entry.getValue().removeSubscriber();
+        }
+        super.onDestroy();
     }
 }

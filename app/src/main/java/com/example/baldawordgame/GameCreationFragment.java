@@ -172,7 +172,7 @@ public class GameCreationFragment extends Fragment {
                     createdGameRoomRef.child("gameRoomStatus").setValue(GameRoom.FULL_GAME_ROOM).addOnCompleteListener(task -> {
                         Intent gameActivityIntent = new Intent(getActivity(), GameActivity.class);
                         gameActivityIntent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, createdGameRoomRef.getKey());
-//                        startActivity(gameActivityIntent);
+                        startActivity(gameActivityIntent);
                     });
                 }
             }
@@ -182,7 +182,7 @@ public class GameCreationFragment extends Fragment {
 
             }
         };
-        createdGameRoomRef.child("playerTwoUID").addValueEventListener(secondPlayerListener);
+        createdGameRoomRef.child("guestUID").addValueEventListener(secondPlayerListener);
     }
 
     private void gameSearchIsStop() {

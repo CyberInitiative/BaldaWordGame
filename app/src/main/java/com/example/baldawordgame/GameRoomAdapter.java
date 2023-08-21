@@ -10,13 +10,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.baldawordgame.model.GameProcessData;
 import com.example.baldawordgame.model.GameRoom;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -24,7 +21,6 @@ import java.util.ArrayList;
 public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHolder> {
 
     private ArrayList<GameRoom> openGameRooms;
-    private DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
 
     public GameRoomAdapter(ArrayList<GameRoom> data) {
         openGameRooms = data;
@@ -56,10 +52,10 @@ public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHo
             holder.turnTimeTextView.setText(holder.itemView.getResources().getString(R.string.two_minutes_radio_text));
         }
 
-        if (gameRoom.getPlayerOneUID().length() >= 10) {
-            holder.opponentNameTextView.setText(String.valueOf(gameRoom.getPlayerOneUID().charAt(0)));
+        if (gameRoom.getHostUID().length() >= 10) {
+            holder.opponentNameTextView.setText(String.valueOf(gameRoom.getHostUID().charAt(0)));
         } else {
-            holder.opponentNameTextView.setText(gameRoom.getPlayerOneUID());
+            holder.opponentNameTextView.setText(gameRoom.getHostUID());
         }
     }
 
@@ -86,8 +82,8 @@ public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHo
                 FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
                 Intent intent = new Intent(itemView.getContext(), GameActivity.class);
                 GameRoom gameRoom = openGameRooms.get(getAdapterPosition());
-                gameRoom.setPlayerTwoUID(firebaseAuth.getCurrentUser().getUid());
-                GameRoom.GAME_ROOMS_REF.child(gameRoom.getGameRoomKey()).child("playerTwoUID").setValue(firebaseAuth.getCurrentUser().getUid());
+                gameRoom.setGuestUID(firebaseAuth.getCurrentUser().getUid());
+                GameRoom.GAME_ROOMS_REF.child(gameRoom.getGameRoomKey()).child("guestUID").setValue(firebaseAuth.getCurrentUser().getUid());
                 GameRoom.GAME_ROOMS_REF.child(gameRoom.getGameRoomKey()).child("gameRoomStatus").addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {

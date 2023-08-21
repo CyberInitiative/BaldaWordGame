@@ -6,15 +6,16 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.databinding.ObservableArrayList;
 import androidx.recyclerview.widget.RecyclerView;
 ;
 import java.util.LinkedList;
 
 public class ShowPanelAdapter extends RecyclerView.Adapter<ShowPanelAdapter.ViewHolder> {
 
-    private LinkedList<LetterCell> listOfLetterCells;
+    private ObservableArrayList<LetterCell> listOfLetterCells;
 
-    public ShowPanelAdapter(LinkedList<LetterCell> listOfLetterCells) {
+    public ShowPanelAdapter(ObservableArrayList<LetterCell> listOfLetterCells) {
         this.listOfLetterCells = listOfLetterCells;
     }
 
