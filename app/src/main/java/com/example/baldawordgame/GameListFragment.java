@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,31 +34,39 @@ public class GameListFragment extends Fragment {
 
     private RecyclerView gamesRecyclerView;
     private GameRoomAdapter gameRoomAdapter;
-    private ArrayList<GameRoom> gameRooms = new ArrayList<>();
-    private HashMap<DatabaseReference, ValueEventListener> refToListener = new HashMap<>();
+    private final ArrayList<Pair<DatabaseReference, GameRoom>> listOfRefToGameRoomPairs = new ArrayList<>();
+    private final HashMap<DatabaseReference, ValueEventListener> gameStatusRefToListener = new HashMap<>();
 
-    private Query roomsQuery = GameRoom.GAME_ROOMS_REF
-            .orderByChild("gameRoomStatus")
+    private final Query roomsQuery = GameRoom.GAME_ROOMS_REF
+            .orderByChild(GameRoom.GAME_ROOM_STATUS_PATH)
             .equalTo(GameRoom.OPEN_GAME_ROOM);
 
-    private ChildEventListener openRoomsChildEventListener = new ChildEventListener() {
+    private final ChildEventListener gameRoomsListener = new ChildEventListener() {
+
         @Override
         public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+            DatabaseReference gameRoomRef = snapshot.getRef();
             GameRoom gameRoom = snapshot.getValue(GameRoom.class);
-            gameRooms.add(0, gameRoom);
+
+            Pair<DatabaseReference, GameRoom> refToGameRoom = new Pair(gameRoomRef, gameRoom);
+
+            listOfRefToGameRoomPairs.add(0, refToGameRoom);
             gameRoomAdapter.notifyItemInserted(0);
+
+            DatabaseReference currentGameStatusRef = gameRoomRef.child(GameRoom.GAME_ROOM_STATUS_PATH);
 
             ValueEventListener gameRoomStatusListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     String gameRoomStatus = snapshot.getValue(String.class);
-                    if(gameRoomStatus != null){
-                        if(gameRoomStatus.equals(GameRoom.FULL_GAME_ROOM)){
-                            refToListener.remove(snapshot.getRef().child("gameRoomStatus"));
-                            snapshot.getRef().child("gameRoomStatus").removeEventListener(this);
-                            snapshot.getRef().removeValue();
-                            gameRooms.remove(gameRoom);
-                        }
+
+                    if (gameRoomStatus != null && gameRoomStatus.equals(GameRoom.FULL_GAME_ROOM)) {
+
+                        gameStatusRefToListener.remove(currentGameStatusRef);
+                        currentGameStatusRef.removeEventListener(this);
+
+                        gameRoomAdapter.notifyItemRemoved(listOfRefToGameRoomPairs.indexOf(refToGameRoom));
+                        listOfRefToGameRoomPairs.remove(refToGameRoom);
                     }
                 }
 
@@ -66,7 +75,9 @@ public class GameListFragment extends Fragment {
 
                 }
             };
-            refToListener.put(snapshot.getRef().child("gameRoomStatus"), gameRoomStatusListener);
+
+            gameStatusRefToListener.put(currentGameStatusRef, gameRoomStatusListener);
+            currentGameStatusRef.addValueEventListener(gameRoomStatusListener);
         }
 
         @Override
@@ -83,11 +94,15 @@ public class GameListFragment extends Fragment {
 
         @Override
         public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+            DatabaseReference gameRoomRef = snapshot.getRef();
             GameRoom gameRoom = snapshot.getValue(GameRoom.class);
+
+            Pair<DatabaseReference, GameRoom> refToGameRoom = new Pair(gameRoomRef, gameRoom);
+
             if (gameRoom != null) {
-                if (gameRooms.contains(gameRoom)) {
-                    gameRoomAdapter.notifyItemRemoved(gameRooms.indexOf(gameRoom));
-                    gameRooms.remove(gameRoom);
+                if (listOfRefToGameRoomPairs.contains(refToGameRoom)) {
+                    gameRoomAdapter.notifyItemRemoved(listOfRefToGameRoomPairs.indexOf(refToGameRoom));
+                    listOfRefToGameRoomPairs.remove(refToGameRoom);
                 }
             }
         }
@@ -131,22 +146,23 @@ public class GameListFragment extends Fragment {
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        roomsQuery.addChildEventListener(openRoomsChildEventListener);
+        roomsQuery.addChildEventListener(gameRoomsListener);
     }
 
     @Override
     public void onDetach() {
-        roomsQuery.removeEventListener(openRoomsChildEventListener);
+        roomsQuery.removeEventListener(gameRoomsListener);
         super.onDetach();
     }
 
     private void viewsSettings(View view) {
         gamesRecyclerView = view.findViewById(R.id.recyclerViewGames);
-        gameRoomAdapter = new GameRoomAdapter(gameRooms);
+        gameRoomAdapter = new GameRoomAdapter(listOfRefToGameRoomPairs);
         gamesRecyclerView.setAdapter(gameRoomAdapter);
         gamesRecyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this.getContext(), DividerItemDecoration.VERTICAL);
         dividerItemDecoration.setDrawable(ContextCompat.getDrawable(this.getContext(), R.drawable.transparent_divider));
         gamesRecyclerView.addItemDecoration(dividerItemDecoration);
     }
+
 }

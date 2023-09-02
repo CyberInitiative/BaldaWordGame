@@ -91,11 +91,11 @@ public class GameActivity extends AppCompatActivity {
     private final Observer<Boolean> dataLoadedStateObserver = state -> {
         if (state) {
             Log.d(TAG, "INVOKED");
-            createGameButtons(gameViewModel.getGameRoom().getGameGridSize());
+            createGameButtons(gameViewModel.getGameRoom().getGameBoardSize());
             setObservers();
             addTextWatcherToInputReceiver();
             recyclersViewSetting();
-            gameViewModel.turnOnVocabularyListener(playerDictionaryAdapter, opponentDictionaryAdapter);
+            gameViewModel.turnOnVocabularyListener();
             gameViewModel.getPlayersVocabulary().addOnListChangedCallback(new ObservableList.OnListChangedCallback() {
                 @Override
                 public void onChanged(ObservableList sender) {
@@ -191,30 +191,28 @@ public class GameActivity extends AppCompatActivity {
         }
     };
 
-//    private final Observer<String> initialWordLiveDataObserver = new Observer<String>() {
-//        @Override
-//        public void onChanged(String initialWord) {
-//            if (initialWord != null && !initialWord.equals(gameViewModel.getGameVocabulary().getInitialWord())) {
-//                gameViewModel.getGameVocabulary().writeInitialWord(initialWord);
-//            }
-//        }
-//    };
-//    private final Observer<String> currentHostLiveDataObserver = new Observer<String>() {
-//        @Override
-//        public void onChanged(String currentHostKey) {
-//            if (currentHostKey.equals(gameViewModel.getGameProcessData().getHostPlayerKey())) {
-//                gameViewModel.getGameProcessData().setHostPlayerKey(currentHostKey);
-//            }
-//        }
-//    };
-//    private final Observer<String> keyOfPlayerWhoseTurnLiveDataObserver = new Observer<String>() {
-//        @Override
-//        public void onChanged(String keyOfPlayerWhoseTurn) {
-//            if (keyOfPlayerWhoseTurn != null && keyOfPlayerWhoseTurn.equals(gameViewModel.getGameProcessData().getKeyOfPlayerWhoseTurnIt())) {
-//                gameViewModel.getGameProcessData().setKeyOfPlayerWhoseTurnIt(keyOfPlayerWhoseTurn);
-//            }
-//        }
-//    };
+    private final Observer<String> keyOfPlayerWhoseTurnLiveDataObserver = new Observer<String>() {
+        @Override
+        public void onChanged(String keyOfPlayerWhoseTurn) {
+            Log.d(TAG, "changed: " + keyOfPlayerWhoseTurn);
+            Log.d(TAG, "Mykey: " + User.getPlayerUid());
+            if (keyOfPlayerWhoseTurn != null && !keyOfPlayerWhoseTurn.equals(User.getPlayerUid())) {
+                Log.d(TAG, "OPPONENT TURN;");
+                for(int i = 0; i < letterCellButtons.length; i++){
+                    for(int j = 0; j < letterCellButtons[i].length; j++){
+                        letterCellButtons[i][j].setEnabled(false);
+                    }
+                }
+            }else if(keyOfPlayerWhoseTurn != null && keyOfPlayerWhoseTurn.equals(User.getPlayerUid())){
+                Log.d(TAG, "MY TURN;");
+                for(int i = 0; i < letterCellButtons.length; i++){
+                    for(int j = 0; j < letterCellButtons[i].length; j++){
+                        letterCellButtons[i][j].setEnabled(true);
+                    }
+                }
+            }
+        }
+    };
     //endregion
 
     @Override
@@ -328,6 +326,22 @@ public class GameActivity extends AppCompatActivity {
                 }
             });
         }
+
+        gameViewModel.getActivePlayerKeyLiveData().observe(GameActivity.this, keyOfPlayerWhoseTurnLiveDataObserver);
+
+        gameViewModel.getIntervalLiveData().observe(GameActivity.this, interval ->{
+            if(!(interval <= 0)) {
+                long minutes = (interval / 1000) / 60;
+                long seconds = (interval / 1000) % 60;
+                Log.d(TAG, "INTERVAL: " + interval);
+//                String time = String.valueOf(minutes) + " : " + String.valueOf(seconds);
+                String time = String.format("%s : %s", minutes, seconds);
+                textViewTimer.setText(time);
+            }else {
+                gameViewModel.endTurn(TurnTerminationCode.TIME_IS_UP);
+                //INITIATE TURN END;
+            }
+        });
     }
 
     private void viewsSettings() {
@@ -350,7 +364,7 @@ public class GameActivity extends AppCompatActivity {
         recyclerViewShowPanel = findViewById(R.id.recyclerViewShowPanel);
         recyclerViewShowPanel.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
-        buttonConfirmCombination.setOnClickListener(click -> gameViewModel.confirmCombination());
+        buttonConfirmCombination.setOnClickListener(click -> gameViewModel.endTurn(TurnTerminationCode.COMBINATION_SUBMITTED));
     }
 
     private void createGameButtons(int gameGridSize) {
@@ -387,7 +401,7 @@ public class GameActivity extends AppCompatActivity {
                 );
                 buttonParams.width = 200;
                 buttonParams.height = 200;
-                buttonParams.setMargins(10, 10, 10, 10);
+                buttonParams.setMargins(5, 5, 5, 5);
                 letterCellButton.setLayoutParams(buttonParams);
 
                 letterCellButton.setOnLongClickListener(event -> {
@@ -409,12 +423,8 @@ public class GameActivity extends AppCompatActivity {
             gameViewModel.getGameBoard().eraseFromCombination(letterCell);
 
         } else if (letterCell.getState().equals(LetterCell.LETTER_CELL_INTENDED_STATE)) {
-            gameViewModel.getGameBoard().getMementoForLetterCell(letterCell);
-            letterCell.notifySubscriberAboutStateChange();
-            letterCell.notifySubscriberAboutLetterChange();
 
-            gameViewModel.getGameBoard().eraseAllFromCombination();
-            gameViewModel.getGameBoard().setIntendedLetter(null);
+            gameViewModel.getGameBoard().eraseEverything();
         }
     }
 

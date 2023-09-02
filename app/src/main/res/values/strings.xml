@@ -25,6 +25,11 @@
     <string name="room_creating_subtitle_text_view_text">Настройка партии</string>
     <string name="opponent_label_txt">Оппонент</string>
     <string name="play_button_text">Играть</string>
+    <string name="player_label">Игрок</string>
+    <string name="turn_plug_label">Чей ход</string>
+    <string name="player_active_label">Ваш ход</string>
+    <string name="opponent_active_label">Ход оппонента</string>
+    <string name="timer_plug_label">Таймер</string>
 
     <string name="text_view_game_room_creation_label">Создание комнаты</string>
     <string name="text_view_game_grid_size_label">Размер игрового поля:</string>
@@ -39,6 +44,12 @@
     <string name="text_view_dictionary_plug">Словарь пуст</string>
     <string name="text_view_waiting_gor_opponent_label">Ожидаем противника</string>
     <string name="button_skip_turn_text">SKIP</string>
+    <string name="profile_tab_text">Профиль</string>
+    <string name="game_rooms_tab_text">Комнаты</string>
+    <string name="create_room_tab_text">Создать комнату</string>
+
+    <string name="room_list_status_empty">Список пуст</string>
+    <string name="room_list_status_loading">Загрузка…</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

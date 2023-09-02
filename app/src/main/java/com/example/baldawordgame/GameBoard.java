@@ -13,16 +13,19 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 public class GameBoard {
     private static final String TAG = "GameBoard";
-    private static final DatabaseReference GAME_BOARDS = FirebaseDatabase.getInstance().getReference().child("gameBoards");
+
+    public static final String GAME_BOARDS_PATH = "gameBoards";
+
+    private static final DatabaseReference GAME_BOARDS = FirebaseDatabase.getInstance().getReference().child(GAME_BOARDS_PATH);
+    private final DatabaseReference currentGameBoard;
 
     private final String gameRoomKey;
+    private final int gameBoardSize;
     private LetterCell currentLetterCell;
     private LetterCell intendedLetter;
     private HashMap<DatabaseReference, LetterCell> letterCellToRef;
@@ -30,13 +33,14 @@ public class GameBoard {
     private final LetterCellCareTaker letterCellCareTaker = new LetterCellCareTaker();
     private Coordinator coordinator;
 
-    public GameBoard(String gameRoomKey, Coordinator coordinator) {
+    public GameBoard(@NonNull String gameRoomKey, int gameBoardSize, Coordinator coordinator) {
         this.gameRoomKey = gameRoomKey;
         this.coordinator = coordinator;
+        this.gameBoardSize = gameBoardSize;
+        currentGameBoard = GAME_BOARDS.child(gameRoomKey);
     }
 
-    //region methods to access Firebase data;
-    public Task<Void> writeGameBoard(int gameBoardSize) {
+    public Task<Void> writeGameBoard() {
         DatabaseReference ref = GAME_BOARDS.child(gameRoomKey);
 
         this.letterCellToRef = new HashMap<>();
@@ -75,13 +79,13 @@ public class GameBoard {
     }
 
     public Task<Void> updateLetterCell(@NonNull LetterCell cell, @NonNull DatabaseReference cellRef) {
-        DatabaseReference path = FirebaseDatabase.getInstance().getReference().child("gameBoards").child(gameRoomKey);
+//        DatabaseReference path = FirebaseDatabase.getInstance().getReference().child(GAME_BOARDS_PATH).child(gameRoomKey);
 
         Map<String, Object> childUpdates = new HashMap<>();
         childUpdates.put(cellRef.getKey() + "/letter", cell.getLetter());
         childUpdates.put(cellRef.getKey() + "/state", cell.getState());
 
-        return path.updateChildren(childUpdates);
+        return currentGameBoard.updateChildren(childUpdates);
     }
 
     public Task<Void> writeInitialWordInGameBoard(@NonNull String word) {
@@ -111,7 +115,6 @@ public class GameBoard {
         }
         return Tasks.whenAll(tasks).continueWith(task -> null);
     }
-    //endregion
 
     public static boolean checkIfOneLetterIsCloseToAnother(@NonNull LetterCell currentCell, LetterCell allegedNeighbor) {
         if (allegedNeighbor != null) {
@@ -196,27 +199,9 @@ public class GameBoard {
         letterCellCareTaker.add(ref, memento);
     }
 
-    public void getMementoForLetterCell(@NonNull LetterCell letterCell) {
-        DatabaseReference ref = getLetterCellRef(letterCell);
-        LetterCellMemento memento = letterCellCareTaker.getLastMemento(ref);
-        letterCell.getStateFromMemento(memento);
-    }
-
-    public void eraseFromCombination(LetterCell targetLetterCell) {
-        LetterCell letterCell = lettersCombination.get(lettersCombination.size() - 1);
-        lettersCombination.remove(letterCell);
-        getMementoForLetterCell(letterCell);
-        letterCell.notifySubscriberAboutStateChange();
-
-        if (letterCell != targetLetterCell) {
-            eraseFromCombination(targetLetterCell);
-        }
-    }
-
-
     public Task<Void> writeLetterCell() {
         List<Task<Void>> tasksList = new ArrayList<>();
-        eraseAllFromCombination();
+        eraseEverything();
         intendedLetter.setState(LetterCell.LETTER_CELL_WITH_LETTER_STATE);
         tasksList.add(updateLetterCell(intendedLetter, getLetterCellRef(intendedLetter)));
         ArrayList<LetterCell> updated = updateAvailableLetterCellsAround(intendedLetter);
@@ -229,11 +214,35 @@ public class GameBoard {
         });
     }
 
-    public void eraseAllFromCombination() {
+    public void getMementoForLetterCell(@NonNull LetterCell letterCell) {
+        DatabaseReference ref = getLetterCellRef(letterCell);
+        LetterCellMemento memento = letterCellCareTaker.getLastMemento(ref);
+        if(memento!= null) {
+            letterCell.getStateFromMemento(memento);
+        }
+    }
+
+    public void eraseFromCombination(LetterCell targetLetterCell) {
+        LetterCell letterCell = lettersCombination.get(lettersCombination.size() - 1);
+        lettersCombination.remove(letterCell);
+        getMementoForLetterCell(letterCell);
+        letterCell.notifySubscriberAboutStateChange();
+        letterCell.notifySubscriberAboutLetterChange();
+
+        if (letterCell != targetLetterCell) {
+            eraseFromCombination(targetLetterCell);
+        }
+    }
+
+    public void eraseEverything(){
         if (!lettersCombination.isEmpty()) {
             LetterCell letterCell = lettersCombination.get(0);
             eraseFromCombination(letterCell);
         }
+        getMementoForLetterCell(intendedLetter);
+        intendedLetter.notifySubscriberAboutLetterChange();
+        intendedLetter.notifySubscriberAboutStateChange();
+        intendedLetter = null;
     }
 
     public boolean checkCombinationConditions() {

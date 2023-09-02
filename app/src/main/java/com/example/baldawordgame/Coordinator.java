@@ -1,11 +1,10 @@
 package com.example.baldawordgame;
 
-import android.util.Log;
-
-import androidx.annotation.NonNull;
-
 import com.example.baldawordgame.model.GameProcessData;
 import com.example.baldawordgame.model.GameRoom;
+import com.google.android.gms.tasks.Task;
+
+import java.util.Random;
 
 public class Coordinator {
 
@@ -16,9 +15,16 @@ public class Coordinator {
     private GameVocabulary gameVocabulary;
     private GameBoard gameBoard;
 
-    @NonNull
-    public String requestGameRoomKey() {
-        return gameRoom.getGameRoomKey();
+    public void endTurn(TurnTerminationCode turnTerminationCode) {
+        switch (turnTerminationCode) {
+            case TIME_IS_UP:
+                break;
+            case TURN_SKIPPED:
+                break;
+            case COMBINATION_SUBMITTED:
+                break;
+        }
+
     }
 
     public void confirmCombination() {
@@ -27,42 +33,39 @@ public class Coordinator {
             if (gameVocabulary.checkWord(word).equals(GameVocabulary.WordCheckResult.NEW_FOUND_WORD)) {
                 gameVocabulary.addWord(word);
                 gameBoard.writeLetterCell();
+                gameProcessData.writeActivePlayerKey(gameRoom.getOpponentKey());
             }
         }
     }
 
-    //region GETTERS_AND_SETTERS
-    public GameProcessData getGameProcessData() {
-        return gameProcessData;
+    public Task<Void> tossUp() {
+        Task<Void> writeKeyTask;
+        long seed = System.currentTimeMillis();
+        Random random = new Random(seed);
+
+        int randomNumber = random.nextInt(101);
+
+        if (randomNumber % 2 == 0) {
+            writeKeyTask = gameProcessData.writeActivePlayerKey(gameRoom.getHostUID());
+        } else {
+            writeKeyTask = gameProcessData.writeActivePlayerKey(gameRoom.getGuestUID());
+        }
+        return writeKeyTask;
     }
 
     public void setGameProcessData(GameProcessData gameProcessData) {
         this.gameProcessData = gameProcessData;
     }
 
-    public GameVocabulary getGameVocabulary() {
-        return gameVocabulary;
-    }
-
     public void setGameVocabulary(GameVocabulary gameVocabulary) {
         this.gameVocabulary = gameVocabulary;
-    }
-
-    public GameBoard getGameBoard() {
-        return gameBoard;
     }
 
     public void setGameBoard(GameBoard gameBoard) {
         this.gameBoard = gameBoard;
     }
 
-    public GameRoom getGameRoom() {
-        return gameRoom;
-    }
-
     public void setGameRoom(GameRoom gameRoom) {
         this.gameRoom = gameRoom;
     }
-
-    //endregion
 }

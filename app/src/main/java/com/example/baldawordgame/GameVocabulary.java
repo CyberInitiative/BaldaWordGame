@@ -11,21 +11,25 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import java.util.ArrayList;
-
 public class GameVocabulary {
 
     private static final String TAG = "GAME_VOCABULARY";
-    public static final DatabaseReference GAME_VOCABULARIES
-            = FirebaseDatabase.getInstance().getReference().child("gameVocabularies");
+
+    //region PATH STRINGS
+    public static final String GAME_VOCABULARIES_PATH = "gameVocabularies";
+    public static final String INITIAL_WORD_PATH = "initialWord";
+    public static final String VOCABULARY_PATH = "vocabulary";
+    //endregion
+
+    public static final DatabaseReference GAME_VOCABULARIES = FirebaseDatabase.getInstance().getReference().child(GAME_VOCABULARIES_PATH);
 
     private final String gameRoomKey;
     private String initialWord;
     private final ObservableArrayList<FoundedWord> playersVocabulary = new  ObservableArrayList<>();
     private final ObservableArrayList<FoundedWord> opponentsVocabulary = new  ObservableArrayList<>();
     private Coordinator coordinator;
-
     private ChildEventListener vocabularyListener;
+
     public enum WordCheckResult {
         NOT_IN_THE_DICTIONARY,
         ALREADY_FOUNDED,
@@ -37,18 +41,17 @@ public class GameVocabulary {
         this.coordinator = coordinator;
     }
 
-    public void turnOnVocabularyListener(DictionaryAdapter userAdapter, DictionaryAdapter opponentAdapter){
+
+    public void turnOnVocabularyListener(){
         vocabularyListener = new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 FoundedWord foundedWord = snapshot.getValue(FoundedWord.class);
                 if(foundedWord != null && foundedWord.getWord() != null && !foundedWord.getWord().equals(initialWord)){
-                    if(foundedWord.getPlayerKey().equals(User.getPlayerKey())){
+                    if(foundedWord.getPlayerKey().equals(User.getPlayerUid())){
                         playersVocabulary.add(foundedWord);
-//                        userAdapter.notifyItemInserted(playersVocabulary.indexOf(foundedWord));
                     }else {
                         opponentsVocabulary.add(foundedWord);
-//                        opponentAdapter.notifyItemInserted(opponentsVocabulary.indexOf(foundedWord));
                     }
                 }
             }
@@ -84,12 +87,12 @@ public class GameVocabulary {
     @NonNull
     public Task<Void> writeInitialWord(@NonNull String initialWord) {
         this.initialWord = initialWord;
-        return GAME_VOCABULARIES.child(gameRoomKey).child("initialWord").setValue(initialWord);
+        return GAME_VOCABULARIES.child(gameRoomKey).child(INITIAL_WORD_PATH).setValue(initialWord);
     }
 
     @NonNull
     public Task<Void> fetchInitialWord() {
-        return GAME_VOCABULARIES.child(gameRoomKey).child("initialWord").get()
+        return GAME_VOCABULARIES.child(gameRoomKey).child(INITIAL_WORD_PATH).get()
                 .continueWith(task -> {
                     String initialWord = task.getResult().getValue(String.class);
                     if(initialWord != null){
@@ -101,8 +104,8 @@ public class GameVocabulary {
 
     @NonNull
     public Task<Void> addWord(@NonNull String word) {
-        FoundedWord foundedWord = new FoundedWord(word, User.getPlayerKey());
-        return GAME_VOCABULARIES.child(gameRoomKey).child("vocabulary").push().setValue(foundedWord);
+        FoundedWord foundedWord = new FoundedWord(word, User.getPlayerUid());
+        return GAME_VOCABULARIES.child(gameRoomKey).child(VOCABULARY_PATH).push().setValue(foundedWord);
     }
 
     @NonNull
@@ -123,7 +126,7 @@ public class GameVocabulary {
         return WordCheckResult.NEW_FOUND_WORD;
     }
 
-    //region GETTERS_AND_SETTERS
+    //region GETTERS AND SETTERS
     public String getInitialWord() {
         return initialWord;
     }
@@ -138,10 +141,6 @@ public class GameVocabulary {
 
     public Coordinator getCoordinator() {
         return coordinator;
-    }
-
-    public void setCoordinator(Coordinator coordinator) {
-        this.coordinator = coordinator;
     }
     //endregion
 }

@@ -1,11 +1,13 @@
 package com.example.baldawordgame;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.Exclude;
 
 public class User {
     private String email;
     private String username;
-    private int gamesPlayed, wins, score = 0;
+    private String gameRoomKey;
 
     public User() {
     }
@@ -15,24 +17,14 @@ public class User {
         this.username = username;
     }
 
-    public User(String email, String username, int gamesPlayed, int wins) {
-        this.email = email;
-        this.username = username;
-        this.gamesPlayed = gamesPlayed;
-        this.wins = wins;
-    }
-
-    public static String getPlayerKey(){
-        return FirebaseAuth.getInstance().getCurrentUser().getUid();
-    }
-
-    public void increaseGamesPlayedCounter(){
-        gamesPlayed=+1;
-    }
-
-    public void increaseGamesPlayedAndWinsCounter(){
-        gamesPlayed=+1;
-        wins=+1;
+    //region GETTERS AND SETTERS
+    @Exclude
+    public static String getPlayerUid(){
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if(user != null){
+            return user.getUid();
+        }
+        return null;
     }
 
     public String getEmail() {
@@ -51,26 +43,23 @@ public class User {
         this.username = username;
     }
 
-    public int getGamesPlayed() {
-        return gamesPlayed;
+    public String getGameRoomKey() {
+        return gameRoomKey;
     }
 
-    public int getWins() {
-        return wins;
+    public void setGameRoomKey(String gameRoomKey) {
+        this.gameRoomKey = gameRoomKey;
     }
 
-    public int getScore() {
-        return score;
-    }
+    //endregion
+
 
     @Override
     public String toString() {
         return "User{" +
                 "email='" + email + '\'' +
                 ", username='" + username + '\'' +
-                ", gamesPlayed=" + gamesPlayed +
-                ", wins=" + wins +
-                ", score=" + score +
+                ", gameRoomKey='" + gameRoomKey + '\'' +
                 '}';
     }
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -12,7 +13,6 @@
         android:id="@+id/textViewOpenRoomsLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
         android:background="@drawable/title_text_view_drawable"
         android:fontFamily="@font/kelly_slab_regular"
         android:gravity="center"
@@ -24,14 +24,35 @@
         android:shadowRadius="0.9"
         android:text="@string/text_view_open_rooms_label"
         android:textColor="@color/lion_mane"
-        android:textSize="36sp" />
+        android:textSize="36sp"
+        app:layout_constraintBottom_toTopOf="@+id/recyclerViewGames"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="spread_inside" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewGames"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginLeft="5dp"
-        android:layout_marginRight="5dp"
-        android:overScrollMode="never" />
+        android:layout_height="0dp"
+        android:overScrollMode="never"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewOpenRoomsLabel"
+        app:layout_constraintVertical_bias="0.5" />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/room_list_status_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/textViewOpenRoomsLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:textSize="20sp"
+        android:text="Список пуст"
+        tools:layout_editor_absoluteX="215dp"
+        tools:layout_editor_absoluteY="298dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

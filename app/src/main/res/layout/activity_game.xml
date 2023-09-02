@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#DFE8E6"
+    android:background="@color/white"
     android:orientation="vertical"
     tools:context=".GameActivity">
 
@@ -17,26 +17,99 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/top_linear_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/ocean_tropic"
-        android:orientation="horizontal"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
+        android:background="@color/white"
+        android:orientation="vertical"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/input_receiver">
+
+
+        <TextView
+            android:id="@+id/activePlayerLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:text="@string/turn_plug_label"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toTopOf="@+id/textViewTimer"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/textViewTimer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_weight="1"
-            android:textSize="20sp" />
-    </LinearLayout>
+            android:layout_marginTop="5dp"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:text="@string/timer_plug_label"
+            android:textColor="@color/black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/activePlayerLabel" />
+
+        <TextView
+            android:id="@+id/textView7"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:text="@string/player_label"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginRight="10dp"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:text="@string/opponent_label_txt"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView9"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="11dp"
+            android:layout_marginTop="1dp"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:text="очки: 0"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView7" />
+
+        <TextView
+            android:id="@+id/textView10"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:layout_marginRight="11dp"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:text="очки: 0"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView8" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:id="@+id/game_board_layout"
@@ -44,36 +117,39 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="vertical"
-        android:paddingLeft="10dp"
+        android:paddingLeft="20dp"
         android:paddingTop="10dp"
-        android:paddingRight="10dp"
+        android:paddingRight="20dp"
         android:paddingBottom="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/top_linear_layout"></LinearLayout>
+        app:layout_constraintTop_toBottomOf="@+id/top_linear_layout">
+
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewShowPanel"
         android:layout_width="wrap_content"
-        android:layout_height="60dp"
+        android:layout_height="40dp"
         android:gravity="center_horizontal"
         android:orientation="horizontal"
-        android:paddingLeft="10dp"
-        android:paddingTop="10dp"
-        android:paddingRight="10dp"
+        android:paddingLeft="7dp"
+        android:paddingTop="7dp"
+        android:paddingRight="7dp"
         android:paddingBottom="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/game_board_layout"></androidx.recyclerview.widget.RecyclerView>
+        app:layout_constraintTop_toBottomOf="@+id/game_board_layout" />
 
     <LinearLayout
         android:id="@+id/players_game_statistic"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:baselineAligned="false"
         android:orientation="horizontal"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
         app:layout_constraintBottom_toTopOf="@+id/bottom_linear_layout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -89,19 +165,16 @@
                 android:id="@+id/textViewPlayerDictionaryLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
                 android:layout_marginBottom="5dp"
                 android:background="@drawable/text_view_drawable"
                 android:fontFamily="@font/kelly_slab_regular"
                 android:gravity="center"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp"
-                android:shadowColor="#E2EDEC"
-                android:shadowDx="1.2"
-                android:shadowDy="2"
-                android:shadowRadius="0.9"
                 android:text="@string/text_view_game_room_player_label"
-                android:textColor="#3E4855"
-                android:textSize="18sp"
+                android:textColor="@color/black"
+                android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
@@ -113,8 +186,7 @@
                 android:layout_height="0dp"
                 android:gravity="center"
                 android:text="@string/text_view_dictionary_plug"
-                app:layout_constraintBottom_toBottomOf="@+id/recyclerViewPlayerDictionary"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textViewPlayerDictionaryLabel" />
 
@@ -124,29 +196,9 @@
                 android:layout_height="0dp"
                 android:layout_marginTop="5dp"
                 android:overScrollMode="never"
-                app:layout_constraintBottom_toTopOf="@+id/textViewPlayerPoints"
-                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textViewPlayerDictionaryLabel" />
-
-            <TextView
-                android:id="@+id/textViewPlayerPoints"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/text_view_drawable"
-                android:fontFamily="@font/kelly_slab_regular"
-                android:gravity="center"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
-                android:shadowColor="#E2EDEC"
-                android:shadowDx="1.2"
-                android:shadowDy="2"
-                android:shadowRadius="0.9"
-                android:text="@string/text_view_game_room_player_points"
-                android:textColor="#3E4855"
-                android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintTop_toBottomOf="@+id/textViewPlayerDictionaryLabel" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -160,18 +212,15 @@
                 android:id="@+id/textViewOpponentDictionaryLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
                 android:background="@drawable/text_view_drawable"
                 android:fontFamily="@font/kelly_slab_regular"
                 android:gravity="center"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp"
-                android:shadowColor="#E2EDEC"
-                android:shadowDx="1.2"
-                android:shadowDy="2"
-                android:shadowRadius="0.9"
                 android:text="@string/text_view_game_room_opponent_label"
-                android:textColor="#3E4855"
-                android:textSize="18sp"
+                android:textColor="@color/black"
+                android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
@@ -183,8 +232,7 @@
                 android:layout_height="0dp"
                 android:layout_marginTop="5dp"
                 android:overScrollMode="never"
-                app:layout_constraintBottom_toTopOf="@+id/textViewOpponentPoints"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textViewOpponentDictionaryLabel" />
 
@@ -194,30 +242,9 @@
                 android:layout_height="0dp"
                 android:gravity="center"
                 android:text="@string/text_view_dictionary_plug"
-                app:layout_constraintBottom_toBottomOf="@+id/recyclerViewOpponentDictionary"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textViewOpponentDictionaryLabel" />
-
-            <TextView
-                android:id="@+id/textViewOpponentPoints"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/text_view_drawable"
-                android:fontFamily="@font/kelly_slab_regular"
-                android:gravity="center"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
-                android:shadowColor="#E2EDEC"
-                android:shadowDx="1.2"
-                android:shadowDy="2"
-                android:shadowRadius="0.9"
-                android:text="@string/text_view_game_room_opponent_points"
-                android:textColor="#3E4855"
-                android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintTop_toBottomOf="@+id/textViewOpponentDictionaryLabel" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -227,7 +254,7 @@
         android:id="@+id/bottom_linear_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#94B8C3"
+        android:background="@color/white"
         android:gravity="center"
         android:orientation="horizontal"
         android:paddingTop="2dp"
@@ -244,12 +271,8 @@
             android:layout_marginRight="10dp"
             android:background="@drawable/round_button_drawable"
             android:fontFamily="@font/kelly_slab_regular"
-            android:shadowColor="#E2EDEC"
-            android:shadowDx="1.2"
-            android:shadowDy="2"
-            android:shadowRadius="0.9"
             android:text="@string/button_skip_turn_text"
-            android:textColor="#3E4855"
+            android:textColor="@color/black"
             android:textSize="14sp" />
 
         <ImageButton

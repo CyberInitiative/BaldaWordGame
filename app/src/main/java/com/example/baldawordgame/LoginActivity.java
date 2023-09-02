@@ -19,7 +19,7 @@ public class LoginActivity extends AppCompatActivity {
     private Button logInBtn;
     private Button signInBtn;
 
-    private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+    private final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

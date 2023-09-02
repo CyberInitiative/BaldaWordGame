@@ -20,13 +20,14 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.example.baldawordgame.model.GameRoom;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class GameCreationFragment extends Fragment {
+
     public static final String TAG = "GameCreationFragment";
 
     private GameRoom createdGameRoom;
@@ -51,8 +52,6 @@ public class GameCreationFragment extends Fragment {
     private RadioButton radioButtonTimerTwoMinutes;
 
     private ProgressBar progressBar;
-    //endregion
-    private AlphaAnimation alphaAnimation;
 
     // Required empty public constructor
     public GameCreationFragment() {
@@ -101,7 +100,7 @@ public class GameCreationFragment extends Fragment {
     private void viewsSettings(@NonNull View view) {
         progressBar = view.findViewById(R.id.progressBar);
 
-        alphaAnimation = new AlphaAnimation(0, 1);
+        AlphaAnimation alphaAnimation = new AlphaAnimation(0, 1);
         alphaAnimation.setDuration(600);
         alphaAnimation.setStartOffset(100);
 
@@ -158,7 +157,7 @@ public class GameCreationFragment extends Fragment {
                 });
 
         createdGameRoomRef = GameRoom.GAME_ROOMS_REF.push();
-        createdGameRoom = new GameRoom(createdGameRoomRef.getKey(), User.getPlayerKey(), getSelectedGridSize(), getSelectedTurnTime());
+        createdGameRoom = new GameRoom(getSelectedGridSize(), getSelectedTurnTime());
 
         createdGameRoomRef.setValue(createdGameRoom);
 
@@ -169,7 +168,7 @@ public class GameCreationFragment extends Fragment {
                 if (dataFromSnapshot != null) {
                     createdGameRoomRef.removeEventListener(secondPlayerListener);
                     opponentFounded = true;
-                    createdGameRoomRef.child("gameRoomStatus").setValue(GameRoom.FULL_GAME_ROOM).addOnCompleteListener(task -> {
+                    createdGameRoomRef.child(GameRoom.GAME_ROOM_STATUS_PATH).setValue(GameRoom.FULL_GAME_ROOM).addOnCompleteListener(task -> {
                         Intent gameActivityIntent = new Intent(getActivity(), GameActivity.class);
                         gameActivityIntent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, createdGameRoomRef.getKey());
                         startActivity(gameActivityIntent);
@@ -182,8 +181,17 @@ public class GameCreationFragment extends Fragment {
 
             }
         };
-        createdGameRoomRef.child("guestUID").addValueEventListener(secondPlayerListener);
+        createdGameRoomRef.child(GameRoom.GUEST_UID_PATH).addValueEventListener(secondPlayerListener);
     }
+
+//    private void dataWriting(){
+//        createdGameRoom = GameRoom.createGameRoom();
+//        createdGameRoomRef = GameRoom.GAME_ROOMS_REF.push();
+//
+//        Task<Void> writeGameTask = createdGameRoomRef.setValue(createdGameRoom);
+//
+//        String dataKey = createdGameRoomRef.getKey();
+//    }
 
     private void gameSearchIsStop() {
         progressBar.animate()
@@ -229,13 +237,13 @@ public class GameCreationFragment extends Fragment {
         return 7;
     }
 
-    private long getSelectedTurnTime() {
+    private int getSelectedTurnTime() {
         if (radioButtonTimerThirtySeconds.isChecked()) {
-            return (30 * 1000);
+            return (30);
         } else if (radioButtonTimerOnMinute.isChecked()) {
-            return (60 * 1000);
+            return (60);
         }
-        return (2 * 60 * 1000);
+        return (2 * 60);
     }
 
 }

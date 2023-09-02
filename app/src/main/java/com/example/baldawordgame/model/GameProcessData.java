@@ -10,83 +10,87 @@ import com.google.firebase.database.Exclude;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
+
 public class GameProcessData {
 
     private final static String TAG = "GameProcessData";
-    private static final DatabaseReference GAME_DATA_REF = FirebaseDatabase.getInstance().getReference().child("gameProcessData");
 
-    private String gameRoomKey;
+    //region PATH STRINGS
+    public static final String GAME_PROCESS_DATA_PATH = "gameProcessData";
+    public static final String GAME_STATE_PATH = "gameState";
+    public static final String ACTIVE_PLAYER_KEY_PATH = "activePlayerKey";
+    public static final String DATA_STATE_PATH = "dataState";
+    public static final String GUEST_STATE_PATH = "guestState";
+    //endregion
 
-    private String dataState;
-    private String gameState;
-    private String keyOfPlayerWhoseTurnIt;
-    private String guestState;
-    private long turnTimeLeftInMillis;
-    private Coordinator coordinator;
+    private static final DatabaseReference GAME_DATA_REF = FirebaseDatabase.getInstance().getReference().child(GAME_PROCESS_DATA_PATH);
+    private final DatabaseReference currentGameProcessDataRef;
+    private final DatabaseReference currentDataStateRef;
+    private final DatabaseReference currentGameStateRef;
+    private final DatabaseReference currentActivePlayerKeyRef;
+    private final DatabaseReference currentGuestStateRef;
+    private HashMap<DatabaseReference, ValueEventListener> refToValueListener = new HashMap<>();
 
-    public GameProcessData() {
-    }
-
-    public GameProcessData(@NonNull String gameRoomKey, @NonNull Coordinator coordinator) {
-        this.coordinator = coordinator;
-        this.gameRoomKey = gameRoomKey;
+    public GameProcessData(@NonNull String gameRoomKey) {
+        currentGameProcessDataRef = GAME_DATA_REF.child(gameRoomKey);
+        currentDataStateRef = currentGameProcessDataRef.child(DATA_STATE_PATH);
+        currentGameStateRef = currentGameProcessDataRef.child(GAME_STATE_PATH);
+        currentActivePlayerKeyRef = currentGameProcessDataRef.child(ACTIVE_PLAYER_KEY_PATH);
+        currentGuestStateRef = currentGameProcessDataRef.child(GUEST_STATE_PATH);
     }
 
     public FirebaseQueryLiveData getGameStateFirebaseQueryLiveData(){
-        return new FirebaseQueryLiveData(GAME_DATA_REF.child(gameRoomKey).child("gameState"));
+        return new FirebaseQueryLiveData(currentGameStateRef);
     }
 
-    public FirebaseQueryLiveData getTurnTimeLeftInMillisFirebaseQueryLiveData(){
-        return new FirebaseQueryLiveData(GAME_DATA_REF.child(gameRoomKey).child("turnTimeLeftInMillis"));
+    public FirebaseQueryLiveData getActivePlayerKeyFirebaseQueryLiveData(){
+        return new FirebaseQueryLiveData(currentActivePlayerKeyRef);
     }
-
-    public FirebaseQueryLiveData getKeyOfPlayerWhoseTurnItFirebaseQueryLiveData(){
-        return new FirebaseQueryLiveData(GAME_DATA_REF.child(gameRoomKey).child("keyOfPlayerWhoseTurnIt"));
-    }
-
-//    public FirebaseQueryLiveData getGuestStateFirebaseQueryLiveData(){
-//        return new FirebaseQueryLiveData(GAME_DATA_REF.child(gameRoomKey).child("guestState"));
-//    }
 
     public Task<Void> writeGameState(@NonNull String gameState) {
-        return GAME_DATA_REF.child(gameRoomKey).child("gameState").setValue(gameState);
-    }
-
-    public Task<Void> writeKeyOfPlayerWhoseTurnIt(@NonNull String hostPlayerKey) {
-        return GAME_DATA_REF.child(gameRoomKey).child("hostPlayerKey").setValue(hostPlayerKey);
-    }
-
-    public Task<Void> writeTurnTimeLeftInMillis(long turnTimeLeftInMillis) {
-        return GAME_DATA_REF.child(gameRoomKey).child("turnTimeLeftInMillis").setValue(turnTimeLeftInMillis);
+        return currentGameStateRef.setValue(gameState);
     }
 
     public Task<Void> writeDataState(@NonNull String dataState) {
-        return GAME_DATA_REF.child(gameRoomKey).child("dataState").setValue(dataState);
+        return currentDataStateRef.setValue(dataState);
     }
 
     public Task<Void> writeGuestState(@NonNull String guestState){
-        return GAME_DATA_REF.child(gameRoomKey).child("guestState").setValue(guestState);
+        return currentGuestStateRef.setValue(guestState);
     }
+
+    public Task<Void> writeActivePlayerKey(@NonNull String whoseTurnIt) {
+        return currentActivePlayerKeyRef.setValue(whoseTurnIt);
+    }
+
 
     public void addDataStateValueListener(@NonNull ValueEventListener valueEventListener){
-        GAME_DATA_REF.child(gameRoomKey).child("dataState").addValueEventListener(valueEventListener);
+        if(!refToValueListener.containsKey(currentDataStateRef)) {
+            refToValueListener.put(currentDataStateRef, valueEventListener);
+            currentDataStateRef.addValueEventListener(valueEventListener);
+        }
     }
 
-    public void removeDataStateValueListener(@NonNull ValueEventListener valueEventListener){
-        GAME_DATA_REF.child(gameRoomKey).child("gameState").removeEventListener(valueEventListener);
+    public void removeDataStateValueListener(){
+        if(refToValueListener.containsKey(currentDataStateRef)){
+            ValueEventListener valueEventListener = refToValueListener.get(currentDataStateRef);
+            currentDataStateRef.removeEventListener(valueEventListener);
+        }
     }
 
     public void addGuestStateValueListener(@NonNull ValueEventListener valueEventListener){
-        GAME_DATA_REF.child(gameRoomKey).child("guestState").addValueEventListener(valueEventListener);
+        if(!refToValueListener.containsKey(currentGuestStateRef)) {
+            refToValueListener.put(currentGuestStateRef, valueEventListener);
+            currentGuestStateRef.addValueEventListener(valueEventListener);
+        }
     }
 
-    public void removeGuestStateValueListener(@NonNull ValueEventListener valueEventListener){
-        GAME_DATA_REF.child(gameRoomKey).child("gameState").removeEventListener(valueEventListener);
-    }
-
-    @Exclude
-    public Coordinator getCoordinator() {
-        return coordinator;
+    public void removeGuestStateValueListener(){
+        if(refToValueListener.containsKey(currentGuestStateRef)){
+            ValueEventListener valueEventListener = refToValueListener.get(currentGuestStateRef);
+            currentGuestStateRef.removeEventListener(valueEventListener);
+        }
     }
 
     //region CONSTANTS
@@ -117,4 +121,5 @@ public class GameProcessData {
     @Exclude
     public static final String TURN_TIME_IS_ANY = "TURN_TIME_IS_ANY";
     //endregion
+
 }

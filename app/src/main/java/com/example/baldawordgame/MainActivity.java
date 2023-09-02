@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
-        firebaseDatabase.setPersistenceEnabled(true);
+//        firebaseDatabase.setPersistenceEnabled(true);
         Dictionary.loadDictionaryFromFirebase().addOnCompleteListener(task -> {
             if (firebaseAuth.getCurrentUser() == null) {
                 Intent loginActivityIntent = new Intent(MainActivity.this, LoginActivity.class);
@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
             tabLayout = findViewById(R.id.tabLayoutMain);
             mainPagerAdapter = new ViewPagerAdapter(this);
             mainPager.setAdapter(mainPagerAdapter);
+            mainPager.setUserInputEnabled(false);
             View child = mainPager.getChildAt(0);
             if (child instanceof RecyclerView) {
                 child.setOverScrollMode(View.OVER_SCROLL_NEVER);
