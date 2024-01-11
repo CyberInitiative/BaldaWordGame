@@ -1,4 +1,4 @@
-package com.example.baldawordgame;
+package com.example.baldawordgame.model;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;

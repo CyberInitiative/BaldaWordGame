@@ -1,7 +1,9 @@
 package com.example.baldawordgame;
 
+import com.example.baldawordgame.model.GameBoard;
 import com.example.baldawordgame.model.GameProcessData;
 import com.example.baldawordgame.model.GameRoom;
+import com.example.baldawordgame.model.Turn;
 import com.google.android.gms.tasks.Task;
 
 import java.util.Random;
@@ -30,26 +32,30 @@ public class Coordinator {
     public void confirmCombination() {
         if (gameBoard.checkCombinationConditions()) {
             String word = gameBoard.makeUpWordFromCombination();
-            if (gameVocabulary.checkWord(word).equals(GameVocabulary.WordCheckResult.NEW_FOUND_WORD)) {
+            if (gameVocabulary.checkWord(word).equals(GameVocabulary.WordCheckResult.NEW_WORD_FOUNDED)) {
                 gameVocabulary.addWord(word);
                 gameBoard.writeLetterCell();
-                gameProcessData.writeActivePlayerKey(gameRoom.getOpponentKey());
+//                gameProcessData.writeActivePlayerKey(gameRoom.getOpponentKey());
             }
         }
     }
 
     public Task<Void> tossUp() {
         Task<Void> writeKeyTask;
+        Turn turn = null;
+
         long seed = System.currentTimeMillis();
         Random random = new Random(seed);
-
         int randomNumber = random.nextInt(101);
 
-        if (randomNumber % 2 == 0) {
-            writeKeyTask = gameProcessData.writeActivePlayerKey(gameRoom.getHostUID());
-        } else {
-            writeKeyTask = gameProcessData.writeActivePlayerKey(gameRoom.getGuestUID());
-        }
+//        if (randomNumber % 2 == 0) {
+//            turn = new Turn(gameRoom.getFirstPlayerUID());
+////            writeKeyTask = gameProcessData.writeActivePlayerKey(gameRoom.getHostUID());
+//        } else {
+//            turn = new Turn(gameRoom.getFirstPlayerUID());
+////            writeKeyTask = gameProcessData.writeActivePlayerKey(gameRoom.getGuestUID());
+//        }
+        writeKeyTask = null;
         return writeKeyTask;
     }
 

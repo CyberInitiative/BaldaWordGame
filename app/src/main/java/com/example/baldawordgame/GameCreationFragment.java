@@ -20,7 +20,6 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.example.baldawordgame.model.GameRoom;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,7 +30,7 @@ public class GameCreationFragment extends Fragment {
     public static final String TAG = "GameCreationFragment";
 
     private GameRoom createdGameRoom;
-    private DatabaseReference createdGameRoomRef;
+    private DatabaseReference createdGameRoomReference;
     private ValueEventListener secondPlayerListener;
     private boolean opponentFounded = false;
 
@@ -41,15 +40,9 @@ public class GameCreationFragment extends Fragment {
     private TextView textViewGameTurnTimeLabel;
     private TextView textViewWaitingForOpponentLabel;
 
-    private RadioGroup gameGridSizeRadioGroup;
-    private RadioButton radioButtonThreeOnThree;
-    private RadioButton radioButtonFiveOnFive;
-    private RadioButton radioButtonSevenOnSeven;
-
-    private RadioGroup gameTimerRadioGroup;
-    private RadioButton radioButtonTimerThirtySeconds;
-    private RadioButton radioButtonTimerOnMinute;
-    private RadioButton radioButtonTimerTwoMinutes;
+    private RadioGroup gameGridSizeRadioGroup, gameTimerRadioGroup;
+    private RadioButton radioButtonThreeOnThree, radioButtonFiveOnFive, radioButtonSevenOnSeven;
+    private RadioButton radioButtonTimerThirtySeconds, radioButtonTimerOnMinute, radioButtonTimerTwoMinutes;
 
     private ProgressBar progressBar;
 
@@ -156,21 +149,24 @@ public class GameCreationFragment extends Fragment {
                     }
                 });
 
-        createdGameRoomRef = GameRoom.GAME_ROOMS_REF.push();
-        createdGameRoom = new GameRoom(getSelectedGridSize(), getSelectedTurnTime());
+        createdGameRoomReference = GameRoom.GAME_ROOMS_REF.push();
+        createdGameRoom = new GameRoom(createdGameRoomReference.getKey(), getSelectedGridSize(), getSelectedTurnTime());
 
-        createdGameRoomRef.setValue(createdGameRoom);
+        createdGameRoomReference.setValue(createdGameRoom);
 
         secondPlayerListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String dataFromSnapshot = snapshot.getValue(String.class);
                 if (dataFromSnapshot != null) {
-                    createdGameRoomRef.removeEventListener(secondPlayerListener);
+                    createdGameRoomReference.removeEventListener(secondPlayerListener);
                     opponentFounded = true;
-                    createdGameRoomRef.child(GameRoom.GAME_ROOM_STATUS_PATH).setValue(GameRoom.FULL_GAME_ROOM).addOnCompleteListener(task -> {
+                    createdGameRoomReference
+                            .child(GameRoom.GAME_ROOM_STATUS_PATH)
+                            .setValue(GameRoom.RoomStatus.FULL_GAME_ROOM)
+                            .addOnCompleteListener(task -> {
                         Intent gameActivityIntent = new Intent(getActivity(), GameActivity.class);
-                        gameActivityIntent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, createdGameRoomRef.getKey());
+                        gameActivityIntent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, createdGameRoomReference.getKey());
                         startActivity(gameActivityIntent);
                     });
                 }
@@ -181,7 +177,9 @@ public class GameCreationFragment extends Fragment {
 
             }
         };
-        createdGameRoomRef.child(GameRoom.GUEST_UID_PATH).addValueEventListener(secondPlayerListener);
+        createdGameRoomReference.child(GameRoom
+                .SECOND_PLAYER_UID_PATH)
+                .addValueEventListener(secondPlayerListener);
     }
 
 //    private void dataWriting(){
@@ -221,10 +219,10 @@ public class GameCreationFragment extends Fragment {
                         textViewGameTurnTimeLabel.setVisibility(View.VISIBLE);
                     }
                 });
-        createdGameRoomRef.removeEventListener(secondPlayerListener);
+        createdGameRoomReference.removeEventListener(secondPlayerListener);
         secondPlayerListener = null;
         if (!opponentFounded) {
-            createdGameRoomRef.removeValue();
+            createdGameRoomReference.removeValue();
         }
     }
 
@@ -243,7 +241,8 @@ public class GameCreationFragment extends Fragment {
         } else if (radioButtonTimerOnMinute.isChecked()) {
             return (60);
         }
-        return (2 * 60);
+        return (10);
+//        return (2 * 60);
     }
 
 }

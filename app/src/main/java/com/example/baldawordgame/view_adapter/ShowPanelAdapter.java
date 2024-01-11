@@ -1,4 +1,4 @@
-package com.example.baldawordgame;
+package com.example.baldawordgame.view_adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,7 +9,8 @@ import androidx.annotation.NonNull;
 import androidx.databinding.ObservableArrayList;
 import androidx.recyclerview.widget.RecyclerView;
 ;
-import java.util.LinkedList;
+import com.example.baldawordgame.model.LetterCell;
+import com.example.baldawordgame.R;
 
 public class ShowPanelAdapter extends RecyclerView.Adapter<ShowPanelAdapter.ViewHolder> {
 

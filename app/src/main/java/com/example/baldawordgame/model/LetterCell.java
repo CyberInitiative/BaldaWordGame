@@ -1,14 +1,11 @@
-package com.example.baldawordgame;
+package com.example.baldawordgame.model;
 
 import android.util.Log;
-import android.util.Pair;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
-import com.google.firebase.database.DatabaseReference;
+import com.example.baldawordgame.LetterCellMemento;
 import com.google.firebase.database.Exclude;
-import com.google.firebase.database.ValueEventListener;
 
 import java.util.Objects;
 
@@ -18,7 +15,7 @@ public class LetterCell {
     private int rowIndex;
     private String letter;
     private String state;
-    private Subscriber subscriber;
+    private transient Subscriber subscriber;
 
     public interface Subscriber {
         void processUpdatedGameCellState(String cellState);
@@ -32,6 +29,20 @@ public class LetterCell {
         this.columnIndex = columnIndex;
         this.rowIndex = rowIndex;
         this.state = LetterCell.LETTER_CELL_UNAVAILABLE_WITHOUT_LETTER_STATE;
+        this.letter = LetterCell.NO_LETTER_PLUG;
+    }
+
+    public LetterCell(int columnIndex, int rowIndex, char letter) {
+        this.columnIndex = columnIndex;
+        this.rowIndex = rowIndex;
+        this.state = LetterCell.LETTER_CELL_WITH_LETTER_STATE;
+        this.letter = Character.toString(letter);
+    }
+
+    public LetterCell(int columnIndex, int rowIndex, @NonNull String state) {
+        this.columnIndex = columnIndex;
+        this.rowIndex = rowIndex;
+        this.state = state;
         this.letter = LetterCell.NO_LETTER_PLUG;
     }
 

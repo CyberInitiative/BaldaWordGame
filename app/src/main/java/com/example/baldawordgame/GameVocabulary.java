@@ -4,6 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.ObservableArrayList;
 
+import com.example.baldawordgame.model.Dictionary;
+import com.example.baldawordgame.model.FoundedWord;
+import com.example.baldawordgame.model.User;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -27,20 +30,17 @@ public class GameVocabulary {
     private String initialWord;
     private final ObservableArrayList<FoundedWord> playersVocabulary = new  ObservableArrayList<>();
     private final ObservableArrayList<FoundedWord> opponentsVocabulary = new  ObservableArrayList<>();
-    private Coordinator coordinator;
     private ChildEventListener vocabularyListener;
 
     public enum WordCheckResult {
         NOT_IN_THE_DICTIONARY,
         ALREADY_FOUNDED,
-        NEW_FOUND_WORD
+        NEW_WORD_FOUNDED
     }
 
-    public GameVocabulary(@NonNull String gameRoomKey, Coordinator coordinator) {
+    public GameVocabulary(@NonNull String gameRoomKey) {
         this.gameRoomKey = gameRoomKey;
-        this.coordinator = coordinator;
     }
-
 
     public void turnOnVocabularyListener(){
         vocabularyListener = new ChildEventListener() {
@@ -123,7 +123,7 @@ public class GameVocabulary {
                 return WordCheckResult.ALREADY_FOUNDED;
             }
         }
-        return WordCheckResult.NEW_FOUND_WORD;
+        return WordCheckResult.NEW_WORD_FOUNDED;
     }
 
     //region GETTERS AND SETTERS
@@ -138,9 +138,6 @@ public class GameVocabulary {
     public ObservableArrayList<FoundedWord> getOpponentsVocabulary() {
         return opponentsVocabulary;
     }
-
-    public Coordinator getCoordinator() {
-        return coordinator;
-    }
     //endregion
+
 }

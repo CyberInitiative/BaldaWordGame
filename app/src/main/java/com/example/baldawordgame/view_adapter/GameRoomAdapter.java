@@ -1,4 +1,4 @@
-package com.example.baldawordgame;
+package com.example.baldawordgame.view_adapter;
 
 import android.content.Intent;
 import android.util.Pair;
@@ -11,7 +11,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.baldawordgame.GameActivity;
+import com.example.baldawordgame.R;
 import com.example.baldawordgame.model.GameRoom;
+import com.example.baldawordgame.model.User;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -54,10 +57,10 @@ public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHo
             holder.turnTimeTextView.setText(holder.itemView.getResources().getString(R.string.two_minutes_radio_text));
         }
 
-        if (gameRoom.getHostUID().length() >= 10) {
-            holder.opponentNameTextView.setText(String.valueOf(gameRoom.getHostUID().charAt(0)));
+        if (gameRoom.getFirstPlayerUID().length() >= 10) {
+            holder.opponentNameTextView.setText(String.valueOf(gameRoom.getFirstPlayerUID().charAt(0)));
         } else {
-            holder.opponentNameTextView.setText(gameRoom.getHostUID());
+            holder.opponentNameTextView.setText(gameRoom.getFirstPlayerUID());
         }
     }
 
@@ -87,21 +90,19 @@ public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHo
                 DatabaseReference currentGameRef = pairInPos.first;
                 GameRoom gameRoom = pairInPos.second;
 
-                gameRoom.setGuestUID(User.getPlayerUid());
+                currentGameRef.child(GameRoom.SECOND_PLAYER_UID_PATH).setValue(User.getPlayerUid());
 
-                currentGameRef.child(GameRoom.GUEST_UID_PATH).setValue(User.getPlayerUid());
                 currentGameRef.child(GameRoom.GAME_ROOM_STATUS_PATH).addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         String snapshotData = snapshot.getValue(String.class);
                         if (snapshotData != null) {
-                            if (snapshotData.equals(GameRoom.FULL_GAME_ROOM)) {
+                            if (snapshotData.equals(GameRoom.RoomStatus.FULL_GAME_ROOM)) {
                                 intent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, currentGameRef.getKey());
                                 itemView.getContext().startActivity(intent);
                             }
                         }
                     }
-
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
 

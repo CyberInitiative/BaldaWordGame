@@ -2,15 +2,16 @@ package com.example.baldawordgame.model;
 
 import androidx.annotation.NonNull;
 
-import com.example.baldawordgame.Coordinator;
-import com.example.baldawordgame.FirebaseQueryLiveData;
+import com.example.baldawordgame.livedata.NewValueSnapshotLiveData;
+import com.example.baldawordgame.livedata.SnapshotLiveData;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.ServerValue;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class GameProcessData {
 
@@ -18,108 +19,138 @@ public class GameProcessData {
 
     //region PATH STRINGS
     public static final String GAME_PROCESS_DATA_PATH = "gameProcessData";
-    public static final String GAME_STATE_PATH = "gameState";
-    public static final String ACTIVE_PLAYER_KEY_PATH = "activePlayerKey";
-    public static final String DATA_STATE_PATH = "dataState";
-    public static final String GUEST_STATE_PATH = "guestState";
+    public static final String GAME_STATUS_PATH = "gameStatus";
+    public static final String ACTIVE_SUPERVISOR_UI_PATH = "activeSupervisorUI";
+    public static final String TURN_PATH = "turn";
+    public static final String FIRST_PLAYER_SCORE_PATH = "firstPlayerScore";
+    public static final String SECOND_PLAYER_SCORE_PATH = "secondPlayerScore";
+    public static final String FIRST_PLAYER_SKIPPED_TURNS_PATH = "firstPlayerSkippedTurns";
+    public static final String SECOND_PLAYER_SKIPPED_TURNS_PATH = "secondPlayerSkippedTurns";
     //endregion
 
-    private static final DatabaseReference GAME_DATA_REF = FirebaseDatabase.getInstance().getReference().child(GAME_PROCESS_DATA_PATH);
-    private final DatabaseReference currentGameProcessDataRef;
-    private final DatabaseReference currentDataStateRef;
-    private final DatabaseReference currentGameStateRef;
-    private final DatabaseReference currentActivePlayerKeyRef;
-    private final DatabaseReference currentGuestStateRef;
-    private HashMap<DatabaseReference, ValueEventListener> refToValueListener = new HashMap<>();
+    //region DATABASE REFS
+    private static final DatabaseReference allGameProcessDataRef = FirebaseDatabase.getInstance().getReference().child(GAME_PROCESS_DATA_PATH);
+    private DatabaseReference currGameProcessDataRef;
+    private DatabaseReference gameStatusRef;
+    private DatabaseReference activeSupervisorRef;
+    private DatabaseReference turnRef;
+    private DatabaseReference firstPlayerScoreRef;
+    private DatabaseReference secondPlayerScoreRef;
+    private DatabaseReference firstPlayerSkippedTurnsRef;
+    private DatabaseReference secondPlayerSkippedTurnsRef;
+    //endregion
+
+    private int firstPlayerScore = 0;
+    private int secondPlayerScore = 0;
+
+    public GameProcessData() {
+    }
 
     public GameProcessData(@NonNull String gameRoomKey) {
-        currentGameProcessDataRef = GAME_DATA_REF.child(gameRoomKey);
-        currentDataStateRef = currentGameProcessDataRef.child(DATA_STATE_PATH);
-        currentGameStateRef = currentGameProcessDataRef.child(GAME_STATE_PATH);
-        currentActivePlayerKeyRef = currentGameProcessDataRef.child(ACTIVE_PLAYER_KEY_PATH);
-        currentGuestStateRef = currentGameProcessDataRef.child(GUEST_STATE_PATH);
+        //region DatabaseRefs init;
+        currGameProcessDataRef = allGameProcessDataRef.child(gameRoomKey);
+        gameStatusRef = currGameProcessDataRef.child(GAME_STATUS_PATH);
+        activeSupervisorRef = currGameProcessDataRef.child(ACTIVE_SUPERVISOR_UI_PATH);
+        turnRef = currGameProcessDataRef.child(TURN_PATH);
+        firstPlayerScoreRef = currGameProcessDataRef.child(FIRST_PLAYER_SCORE_PATH);
+        secondPlayerScoreRef = currGameProcessDataRef.child(SECOND_PLAYER_SCORE_PATH);
+        firstPlayerSkippedTurnsRef = currGameProcessDataRef.child(FIRST_PLAYER_SKIPPED_TURNS_PATH);
+        secondPlayerSkippedTurnsRef = currGameProcessDataRef.child(SECOND_PLAYER_SKIPPED_TURNS_PATH);
+        //endregion
+
+        firstPlayerScore = 0;
+        secondPlayerScore = 0;
     }
 
-    public FirebaseQueryLiveData getGameStateFirebaseQueryLiveData(){
-        return new FirebaseQueryLiveData(currentGameStateRef);
+    public Task<Void> writeGameStage(@NonNull String gameStage) {
+        return gameStatusRef.setValue(gameStage);
     }
 
-    public FirebaseQueryLiveData getActivePlayerKeyFirebaseQueryLiveData(){
-        return new FirebaseQueryLiveData(currentActivePlayerKeyRef);
+    public Task<Void> writeFirstPlayerScore(int score) {
+        return firstPlayerScoreRef.setValue(firstPlayerScore + score);
     }
 
-    public Task<Void> writeGameState(@NonNull String gameState) {
-        return currentGameStateRef.setValue(gameState);
+    public Task<Void> writeSecondPlayerScore(int score) {
+        return firstPlayerScoreRef.setValue(secondPlayerScore + score);
     }
 
-    public Task<Void> writeDataState(@NonNull String dataState) {
-        return currentDataStateRef.setValue(dataState);
+    public Task<Void> writeTurn(@NonNull String activePlayerKey) {
+        Map<String, Object> values = new HashMap<>();
+        values.put("activePlayerKey", activePlayerKey);
+        values.put("turnStartedAt", ServerValue.TIMESTAMP);
+
+        return turnRef.setValue(values);
     }
 
-    public Task<Void> writeGuestState(@NonNull String guestState){
-        return currentGuestStateRef.setValue(guestState);
+    public NewValueSnapshotLiveData<String> getGameStageUniqueSnapshotLiveData() {
+        return new NewValueSnapshotLiveData<>(gameStatusRef, String.class);
     }
 
-    public Task<Void> writeActivePlayerKey(@NonNull String whoseTurnIt) {
-        return currentActivePlayerKeyRef.setValue(whoseTurnIt);
+    public NewValueSnapshotLiveData<Turn> getTurnUniqueSnapshotLiveData() {
+        return new NewValueSnapshotLiveData<>(turnRef, Turn.class);
     }
 
-
-    public void addDataStateValueListener(@NonNull ValueEventListener valueEventListener){
-        if(!refToValueListener.containsKey(currentDataStateRef)) {
-            refToValueListener.put(currentDataStateRef, valueEventListener);
-            currentDataStateRef.addValueEventListener(valueEventListener);
-        }
+    public NewValueSnapshotLiveData<Integer> getFirstPlayerScoreSnapshotLiveData() {
+        return new NewValueSnapshotLiveData<>(firstPlayerScoreRef, Integer.class);
     }
 
-    public void removeDataStateValueListener(){
-        if(refToValueListener.containsKey(currentDataStateRef)){
-            ValueEventListener valueEventListener = refToValueListener.get(currentDataStateRef);
-            currentDataStateRef.removeEventListener(valueEventListener);
-        }
+    public NewValueSnapshotLiveData<Integer> getSecondPlayerScoreSnapshotLiveData() {
+        return new NewValueSnapshotLiveData<>(secondPlayerScoreRef, Integer.class);
     }
 
-    public void addGuestStateValueListener(@NonNull ValueEventListener valueEventListener){
-        if(!refToValueListener.containsKey(currentGuestStateRef)) {
-            refToValueListener.put(currentGuestStateRef, valueEventListener);
-            currentGuestStateRef.addValueEventListener(valueEventListener);
-        }
+    public NewValueSnapshotLiveData<Integer> getFirstPlayerSkippedTurns(){
+        return new NewValueSnapshotLiveData<>(firstPlayerSkippedTurnsRef, Integer.class);
     }
 
-    public void removeGuestStateValueListener(){
-        if(refToValueListener.containsKey(currentGuestStateRef)){
-            ValueEventListener valueEventListener = refToValueListener.get(currentGuestStateRef);
-            currentGuestStateRef.removeEventListener(valueEventListener);
-        }
+    public NewValueSnapshotLiveData<Integer> getSecondPlayerSkippedTurns(){
+        return new NewValueSnapshotLiveData<>(secondPlayerSkippedTurnsRef, Integer.class);
     }
 
-    //region CONSTANTS
-    @Exclude
-    public static final String ROOM_CREATED_STATE = "ROOM_CREATED_STATE";
-    @Exclude
-    public static final String ROOM_DATA_PREPARING_STATE = "ROOM_DATA_PREPARING_STATE";
-    @Exclude
-    public static final String GUEST_IS_READY = "GUEST_IS_READY";
-    @Exclude
-    public static final String DATA_PREPARED_STATE = "DATA_PREPARED_STATE";
+    public DatabaseReference getFirstPlayerSkippedTurnsRef() {
+        return firstPlayerSkippedTurnsRef;
+    }
 
-    @Exclude
-    public static final String GAME_GRID_SIZE_THREE_ON_THREE = "GAME_GRID_SIZE_THREE_ON_THREE";
-    @Exclude
-    public static final String GAME_GRID_SIZE_FIVE_ON_FIVE = "GAME_GRID_SIZE_FIVE_ON_FIVE";
-    @Exclude
-    public static final String GAME_GRID_SIZE_SEVEN_ON_SEVEN = "GAME_GRID_SIZE_SEVEN_ON_SEVEN";
-    @Exclude
-    public static final String GAME_GRID_SIZE_ANY = "GAME_GRID_SIZE_ANY";
+    public void setFirstPlayerSkippedTurnsRef(DatabaseReference firstPlayerSkippedTurnsRef) {
+        this.firstPlayerSkippedTurnsRef = firstPlayerSkippedTurnsRef;
+    }
 
-    @Exclude
-    public static final String TURN_TIME_IS_THIRTY_SECONDS = "TURN_TIME_IS_THIRTY_SECONDS";
-    @Exclude
-    public static final String TURN_TIME_IS_ONE_MINUTE = "TURN_TIME_IS_ONE_MINUTE";
-    @Exclude
-    public static final String TURN_TIME_IS_TWO_MINUTES = "TURN_TIME_IS_TWO_MINUTES";
-    @Exclude
-    public static final String TURN_TIME_IS_ANY = "TURN_TIME_IS_ANY";
-    //endregion
+    public DatabaseReference getSecondPlayerSkippedTurnsRef() {
+        return secondPlayerSkippedTurnsRef;
+    }
 
+    public void setSecondPlayerSkippedTurnsRef(DatabaseReference secondPlayerSkippedTurnsRef) {
+        this.secondPlayerSkippedTurnsRef = secondPlayerSkippedTurnsRef;
+    }
+
+    public int getFirstPlayerScore() {
+        return firstPlayerScore;
+    }
+
+    public void setFirstPlayerScore(int firstPlayerScore) {
+        this.firstPlayerScore = firstPlayerScore;
+    }
+
+    public int getSecondPlayerScore() {
+        return secondPlayerScore;
+    }
+
+    public void setSecondPlayerScore(int secondPlayerScore) {
+        this.secondPlayerScore = secondPlayerScore;
+    }
+
+    @Override
+    public String toString() {
+        return "GameProcessData{" +
+                "currGameProcessDataRef=" + currGameProcessDataRef +
+                ", gameStatusRef=" + gameStatusRef +
+                ", activeSupervisorRef=" + activeSupervisorRef +
+                ", turnRef=" + turnRef +
+                ", firstPlayerScoreRef=" + firstPlayerScoreRef +
+                ", secondPlayerScoreRef=" + secondPlayerScoreRef +
+                ", firstPlayerSkippedTurnsRef=" + firstPlayerSkippedTurnsRef +
+                ", secondPlayerSkippedTurnsRef=" + secondPlayerSkippedTurnsRef +
+                ", firstPlayerScore=" + firstPlayerScore +
+                ", secondPlayerScore=" + secondPlayerScore +
+                '}';
+    }
 }

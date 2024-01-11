@@ -1,4 +1,4 @@
-package com.example.baldawordgame;
+package com.example.baldawordgame.fragment;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -17,7 +17,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.baldawordgame.R;
 import com.example.baldawordgame.model.GameRoom;
+import com.example.baldawordgame.view_adapter.GameRoomAdapter;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -39,7 +41,7 @@ public class GameListFragment extends Fragment {
 
     private final Query roomsQuery = GameRoom.GAME_ROOMS_REF
             .orderByChild(GameRoom.GAME_ROOM_STATUS_PATH)
-            .equalTo(GameRoom.OPEN_GAME_ROOM);
+            .equalTo(GameRoom.RoomStatus.OPEN_GAME_ROOM);
 
     private final ChildEventListener gameRoomsListener = new ChildEventListener() {
 
@@ -60,7 +62,7 @@ public class GameListFragment extends Fragment {
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     String gameRoomStatus = snapshot.getValue(String.class);
 
-                    if (gameRoomStatus != null && gameRoomStatus.equals(GameRoom.FULL_GAME_ROOM)) {
+                    if (gameRoomStatus != null && gameRoomStatus.equals(GameRoom.RoomStatus.FULL_GAME_ROOM)) {
 
                         gameStatusRefToListener.remove(currentGameStatusRef);
                         currentGameStatusRef.removeEventListener(this);
