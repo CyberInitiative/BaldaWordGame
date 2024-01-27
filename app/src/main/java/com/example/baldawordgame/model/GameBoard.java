@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.databinding.ObservableArrayList;
 
 import com.example.baldawordgame.LetterCellCareTaker;
-import com.example.baldawordgame.LetterCellLiveData;
+import com.example.baldawordgame.livedata.LetterCellLiveData;
 import com.example.baldawordgame.LetterCellMemento;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -59,7 +59,7 @@ public class GameBoard {
         return currentGameBoardRef.setValue(letterCells);
     }
 
-    public Task<Void> getGameBoard() {
+    public Task<Void> fetchGameBoard() {
         return currentGameBoardRef.get().continueWith(task -> {
             HashMap<DatabaseReference, LetterCell> hashMap = new HashMap<>();
             for (DataSnapshot snapshot : task.getResult().getChildren()) {
@@ -73,6 +73,15 @@ public class GameBoard {
         });
     }
 
+    public ArrayList<LetterCell> getLetterCellsArrayList(){
+        ArrayList<LetterCell> letterCells = new ArrayList<>();
+        for(Map.Entry<DatabaseReference, LetterCell> letterCellEntry : refToLetterCell.entrySet()){
+            LetterCell letterCell = letterCellEntry.getValue();
+            letterCells.add(letterCell);
+        }
+        return letterCells;
+    }
+
     public ArrayList<LetterCellLiveData> getLetterCellLiveDataArrayList() {
         ArrayList<LetterCellLiveData> arrayListOfaLetterCellLiveData = new ArrayList<>();
         for (Map.Entry<DatabaseReference, LetterCell> entry : refToLetterCell.entrySet()) {
@@ -82,78 +91,6 @@ public class GameBoard {
         return arrayListOfaLetterCellLiveData;
     }
 
-    public Task<Void> writeInitialWordInGameBoard(@NonNull String word) {
-        Log.d(TAG, "WORD IS: " + word);
-        List<LetterCell> letterCellsToUpdate = new ArrayList<>();
-
-        if ((word.length() * word.length()) == refToLetterCell.size()) {
-            int rowPosition = word.length() / 2;
-            List<LetterCell> wordLetterCells = new ArrayList<>();
-
-            for (int i = 0; i < word.length(); i++) {
-                LetterCell letterCell = getLetterCellByRowAndColumn(rowPosition, i);
-                letterCell.setLetter(String.valueOf(word.charAt(i)));
-                letterCell.setState(LetterCell.LETTER_CELL_WITH_LETTER_STATE);
-                wordLetterCells.add(letterCell);
-            }
-
-            for (LetterCell letterCell : wordLetterCells) {
-                ArrayList<LetterCell> result = updateAvailableLetterCellsAround(letterCell);
-                letterCellsToUpdate.addAll(result);
-                letterCellsToUpdate.add(letterCell);
-            }
-
-            Map<String, Object> childUpdates = new HashMap<>();
-            for (LetterCell letterCell : letterCellsToUpdate) {
-                DatabaseReference letterCellRef = getLetterCellRef(letterCell);
-                childUpdates.put(letterCellRef.getKey() + "/letter", letterCell.getLetter());
-                childUpdates.put(letterCellRef.getKey() + "/state", letterCell.getState());
-            }
-            Log.d(TAG, "CHILD UPDATES: " + childUpdates);
-
-            return currentGameBoardRef.updateChildren(childUpdates);
-        }
-
-        return null;
-    }
-
-//    public Task<Void> writeGameBoard() {
-//        DatabaseReference ref = GAME_BOARDS.child(gameRoomKey);
-//
-//        this.refToLetterCell = new HashMap<>();
-//        ArrayList<Task<Void>> tasks = new ArrayList<>();
-//
-//        for (int i = 0; i < gameBoardSize; i++) { //rows
-//            for (int j = 0; j < gameBoardSize; j++) { //columns
-//                LetterCell letterCell = new LetterCell(j, i);
-//                DatabaseReference letterCellKey = ref.push();
-//                refToLetterCell.put(letterCellKey, letterCell);
-//
-//                Task<Void> setValueTask = letterCellKey.setValue(letterCell);
-//                tasks.add(setValueTask);
-//            }
-//        }
-//
-//        return Tasks.whenAll(tasks).continueWith(task -> null);
-//    }
-
-//    public Task<Void> fetchGameBoard() {
-//        Task<DataSnapshot> fetchTask = currentGameBoardRef.get();
-//
-//        return fetchTask.continueWith(task -> {
-//            HashMap<DatabaseReference, LetterCell> letterCellToRef = new HashMap<>();
-//
-//            DataSnapshot snapshot = task.getResult();
-//            for (DataSnapshot child : snapshot.getChildren()) {
-//                LetterCell letterCell = child.getValue(LetterCell.class);
-//                DatabaseReference letterCellRef = child.getRef();
-//                letterCellToRef.put(letterCellRef, letterCell);
-//            }
-//            GameBoard.this.refToLetterCell = letterCellToRef;
-//            return null;
-//        });
-//    }
-
     public Task<Void> updateLetterCell(@NonNull LetterCell cell, @NonNull DatabaseReference cellRef) {
         Map<String, Object> childUpdates = new HashMap<>();
         childUpdates.put(cellRef.getKey() + "/letter", cell.getLetter());
@@ -161,34 +98,6 @@ public class GameBoard {
 
         return currentGameBoardRef.updateChildren(childUpdates);
     }
-
-//    public Task<Void> writeInitialWordInGameBoard(@NonNull String word) {
-//        List<LetterCell> letterCellsToUpdate = new ArrayList<>();
-//        List<Task<Void>> tasks = new ArrayList<>();
-//        if ((word.length() * word.length()) == letterCellToRef.size()) {
-//            int rowPosition = word.length() / 2;
-//            List<LetterCell> wordLetterCells = new ArrayList<>();
-//            for (int i = 0; i < word.length(); i++) {
-//                LetterCell letterCell = getLetterCellByRowAndColumn(rowPosition, i);
-//                letterCell.setLetter(String.valueOf(word.charAt(i)));
-//                letterCell.setState(LetterCell.LETTER_CELL_WITH_LETTER_STATE);
-//                wordLetterCells.add(letterCell);
-//            }
-//            for (LetterCell letterCell : wordLetterCells) {
-//                ArrayList<LetterCell> result = updateAvailableLetterCellsAround(letterCell);
-//                letterCellsToUpdate.addAll(result);
-//                letterCellsToUpdate.add(letterCell);
-//            }
-//
-//            for (LetterCell letterCell : letterCellsToUpdate) {
-//                DatabaseReference letterCellRef = getLetterCellRef(letterCell);
-//                Task<Void> task = updateLetterCell(letterCell, letterCellRef);
-//
-//                tasks.add(task);
-//            }
-//        }
-//        return Tasks.whenAll(tasks).continueWith(task -> null);
-//    }
 
     public static boolean checkIfOneLetterIsCloseToAnother(@NonNull LetterCell currentCell, LetterCell allegedNeighbor) {
         if (allegedNeighbor != null) {
@@ -392,7 +301,7 @@ public class GameBoard {
         return updatedLetterCells;
     }
 
-    //region getters and setters
+    //region GETTERS AND SETTERS
 
     public LetterCell getIntendedLetter() {
         return intendedLetter;
@@ -422,4 +331,5 @@ public class GameBoard {
         return refToLetterCell;
     }
     //endregion
+
 }

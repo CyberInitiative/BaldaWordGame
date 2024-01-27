@@ -90,7 +90,7 @@ public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHo
                 DatabaseReference currentGameRef = pairInPos.first;
                 GameRoom gameRoom = pairInPos.second;
 
-                currentGameRef.child(GameRoom.SECOND_PLAYER_UID_PATH).setValue(User.getPlayerUid());
+                currentGameRef.child(GameRoom.SECOND_PLAYER_UID_PATH).setValue(User.fetchPlayerUID());
 
                 currentGameRef.child(GameRoom.GAME_ROOM_STATUS_PATH).addValueEventListener(new ValueEventListener() {
                     @Override
@@ -98,8 +98,10 @@ public class GameRoomAdapter extends RecyclerView.Adapter<GameRoomAdapter.ViewHo
                         String snapshotData = snapshot.getValue(String.class);
                         if (snapshotData != null) {
                             if (snapshotData.equals(GameRoom.RoomStatus.FULL_GAME_ROOM)) {
-                                intent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, currentGameRef.getKey());
-                                itemView.getContext().startActivity(intent);
+                                User.writeJoinedGameRoomKey(currentGameRef.getKey()).addOnCompleteListener(task -> {
+                                    intent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, currentGameRef.getKey());
+                                    itemView.getContext().startActivity(intent);
+                                });
                             }
                         }
                     }

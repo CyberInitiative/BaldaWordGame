@@ -1,4 +1,4 @@
-package com.example.baldawordgame;
+package com.example.baldawordgame.view;
 
 import android.content.Context;
 import android.view.Gravity;
@@ -6,6 +6,7 @@ import android.view.Gravity;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import com.example.baldawordgame.R;
 import com.example.baldawordgame.model.LetterCell;
 
 public class LetterCellButton extends androidx.appcompat.widget.AppCompatButton implements LetterCell.Subscriber {

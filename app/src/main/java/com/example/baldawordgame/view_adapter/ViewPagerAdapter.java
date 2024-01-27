@@ -5,7 +5,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import com.example.baldawordgame.GameCreationFragment;
+import com.example.baldawordgame.fragment.GameCreationFragment;
 import com.example.baldawordgame.fragment.GameListFragment;
 import com.example.baldawordgame.fragment.ProfileFragment;
 

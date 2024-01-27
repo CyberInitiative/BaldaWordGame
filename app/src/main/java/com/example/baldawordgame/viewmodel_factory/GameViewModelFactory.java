@@ -1,4 +1,4 @@
-package com.example.baldawordgame;
+package com.example.baldawordgame.viewmodel_factory;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;

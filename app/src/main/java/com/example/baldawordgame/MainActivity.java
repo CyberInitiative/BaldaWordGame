@@ -10,7 +10,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.baldawordgame.model.Dictionary;
+import com.example.baldawordgame.model.GameRoom;
+import com.example.baldawordgame.model.User;
 import com.example.baldawordgame.view_adapter.ViewPagerAdapter;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.auth.FirebaseAuth;
@@ -54,26 +58,39 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
 //        firebaseDatabase.setPersistenceEnabled(true);
-        Dictionary.loadDictionaryFromFirebase().addOnCompleteListener(task -> {
-            if (firebaseAuth.getCurrentUser() == null) {
-                Intent loginActivityIntent = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(loginActivityIntent);
-            }
+        Task<User> fetchUserTask = User.fetchUser();
+        Task<Void> fetchDictionaryTask = Dictionary.fetchDictionary();
+        Tasks.whenAll(fetchUserTask, fetchDictionaryTask)
+                .addOnCompleteListener(task -> {
+                    if (firebaseAuth.getCurrentUser() == null) {
+                        Intent loginActivityIntent = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(loginActivityIntent);
+                    } else {
+                        User user = fetchUserTask.getResult();
+                        if (user.getJoinedGameRoomKey() != null && !user.getJoinedGameRoomKey().equals(User.NO_JOINED_GAME_ROOM) ) {
+                            GameRoom.fetchGameRoom(user.getJoinedGameRoomKey()).addOnCompleteListener(fetchGameRoomTask -> {
+                                if(fetchGameRoomTask.getResult() != null){
+                                    Intent intent = new Intent(MainActivity.this, GameActivity.class);
+                                    intent.putExtra(GameActivity.CURRENT_GAME_ROOM_KEY, user.getJoinedGameRoomKey());
+                                    startActivity(intent);
+                                }
+                            });
+                        } else {
 
-            mainPager = findViewById(R.id.mainPager);
-            tabLayout = findViewById(R.id.tabLayoutMain);
-            mainPagerAdapter = new ViewPagerAdapter(this);
-            mainPager.setAdapter(mainPagerAdapter);
-            mainPager.setUserInputEnabled(false);
-            View child = mainPager.getChildAt(0);
-            if (child instanceof RecyclerView) {
-                child.setOverScrollMode(View.OVER_SCROLL_NEVER);
-            }
-
-            new TabLayoutMediator(tabLayout, mainPager,
-                    (tab, position) -> tab.setText(arrayList.get(position))).attach();
-        });
-
+                            mainPager = findViewById(R.id.mainPager);
+                            tabLayout = findViewById(R.id.tabLayoutMain);
+                            mainPagerAdapter = new ViewPagerAdapter(this);
+                            mainPager.setAdapter(mainPagerAdapter);
+                            mainPager.setUserInputEnabled(false);
+                            View child = mainPager.getChildAt(0);
+                            if (child instanceof RecyclerView) {
+                                child.setOverScrollMode(View.OVER_SCROLL_NEVER);
+                            }
+                            new TabLayoutMediator(tabLayout, mainPager,
+                                    (tab, position) -> tab.setText(arrayList.get(position))).attach();
+                        }
+                    }
+                });
     }
 
     private void visibilityOptions() {

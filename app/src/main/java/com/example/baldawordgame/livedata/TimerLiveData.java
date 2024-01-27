@@ -7,14 +7,13 @@ import androidx.lifecycle.LiveData;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class TurnTimerLiveData extends LiveData<Long> {
+public class TimerLiveData extends LiveData<Long> {
     private static final String TAG = "TurnTimer Class";
 
     private final int turnDuration;
     private Timer timer;
-    private boolean isTimerRunning = false;
 
-    public TurnTimerLiveData(int turnDuration) {
+    public TimerLiveData(int turnDuration) {
         this.turnDuration = turnDuration;
     }
 
@@ -37,7 +36,7 @@ public class TurnTimerLiveData extends LiveData<Long> {
 
 //                long turnMustStopAt = turnStartedAt + (2 * 60 * 1000);
 
-                long timeLeft = (TurnTimerLiveData.this.turnDuration * 1000L) - amountToSubtract;
+                long timeLeft = (TimerLiveData.this.turnDuration * 1000L) - amountToSubtract;
 
                 Log.d(TAG, "TIME LEFT: " + timeLeft);
 //                Log.d(TAG, "TURN MUST END AT: " + turnMustStopAt);

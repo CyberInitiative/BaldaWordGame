@@ -9,16 +9,16 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.baldawordgame.R;
-import com.example.baldawordgame.model.FoundedWord;
+import com.example.baldawordgame.model.FoundWord;
 
 import java.util.ArrayList;
 
 public class DictionaryAdapter extends RecyclerView.Adapter<DictionaryAdapter.ViewHolder> {
 
-    private ArrayList<FoundedWord> listOfFoundedWords;
+    private ArrayList<FoundWord> listOfFoundWords;
 
-    public DictionaryAdapter(ArrayList<FoundedWord> listOfFoundedWords) {
-        this.listOfFoundedWords = listOfFoundedWords;
+    public DictionaryAdapter(ArrayList<FoundWord> listOfFoundWords) {
+        this.listOfFoundWords = listOfFoundWords;
     }
 
     @NonNull
@@ -30,13 +30,13 @@ public class DictionaryAdapter extends RecyclerView.Adapter<DictionaryAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull DictionaryAdapter.ViewHolder holder, int position) {
-        FoundedWord foundedWord = listOfFoundedWords.get(position);
-        holder.textViewWordInDictionary.setText(foundedWord.getWord());
+        FoundWord foundWord = listOfFoundWords.get(position);
+        holder.textViewWordInDictionary.setText(foundWord.getWord());
     }
 
     @Override
     public int getItemCount() {
-        return listOfFoundedWords == null ? 0 : listOfFoundedWords.size();
+        return listOfFoundWords == null ? 0 : listOfFoundWords.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

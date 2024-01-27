@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -20,24 +21,35 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.ObservableArrayList;
 import androidx.databinding.ObservableList;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.baldawordgame.fragment.SurrenderAndLeaveDialogFragment;
+import com.example.baldawordgame.fragment.SurrenderDialogFragment;
+import com.example.baldawordgame.model.FoundWord;
 import com.example.baldawordgame.model.GameBoard;
 import com.example.baldawordgame.model.LetterCell;
 import com.example.baldawordgame.model.User;
+import com.example.baldawordgame.view.LetterCellButton;
 import com.example.baldawordgame.view_adapter.DictionaryAdapter;
 import com.example.baldawordgame.view_adapter.ShowPanelAdapter;
 import com.example.baldawordgame.viewmodel.GameViewModel;
+import com.example.baldawordgame.viewmodel_factory.GameViewModelFactory;
 import com.google.firebase.database.DatabaseReference;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class GameActivity extends AppCompatActivity {
+public class GameActivity extends AppCompatActivity
+        implements SurrenderAndLeaveDialogFragment.SurrenderAndLeaveDialogAnswerListener,
+        SurrenderDialogFragment.SurrenderDialogAnswerListener
+{
 
     private final static String TAG = "GAME_ACTIVITY";
     public final static String CURRENT_GAME_ROOM_KEY = "CURRENT_GAME_ROOM_KEY";
@@ -46,8 +58,8 @@ public class GameActivity extends AppCompatActivity {
     private EditText inputReceiver;
     private RecyclerView recyclerViewPlayerDictionary, recyclerViewOpponentDictionary, recyclerViewShowPanel;
     private LinearLayout gameBoardLayout;
-    private ImageButton buttonConfirmCombination;
-    private Button buttonSkipTurn;
+    private ImageButton buttonConfirmCombination, skipTurnButton;
+    private Button buttonSurrender;
     private TextView textViewTimer;
     private TextView playerScore, opponentScore;
     private TextView textViewPlayerDictionaryPlug, textViewOpponentDictionaryPlug;
@@ -57,8 +69,11 @@ public class GameActivity extends AppCompatActivity {
 
     private GameViewModel gameViewModel;
     private DictionaryAdapter playerDictionaryAdapter, opponentDictionaryAdapter;
+    private ArrayList<FoundWord> playerFoundWords = new ArrayList<>();
+    private ArrayList<FoundWord> opponentFoundWords = new ArrayList<>();
     private ShowPanelAdapter showPanelAdapter;
     private InputMethodManager imm;
+
     private final TextWatcher inputReceiverTextWatcher = new TextWatcher() {
         @Override
         public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -84,7 +99,7 @@ public class GameActivity extends AppCompatActivity {
             ) {
                 gameViewModel.getGameBoard().writeMementoForLetterCell(gameViewModel.getGameBoard().getCurrentLetterCell());
 
-                gameViewModel.getGameBoard().getCurrentLetterCell().setLetter(inputReceiver.getText().toString());
+                gameViewModel.getGameBoard().getCurrentLetterCell().setLetter(inputReceiver.getText().toString().toLowerCase());
                 gameViewModel.getGameBoard().getCurrentLetterCell().setState(LetterCell.LETTER_CELL_INTENDED_STATE);
 
                 gameViewModel.getGameBoard().getCurrentLetterCell().notifySubscriberAboutStateChange();
@@ -100,46 +115,12 @@ public class GameActivity extends AppCompatActivity {
         }
     };
 
-    //region LiveData Observers
-//    private final Observer<Boolean> dataLoadedStateObserver = state -> {
-//        if (state) {
-//            createGameButtons(gameViewModel.getGameRoom().getGameBoardSize());
-//            setObservers();
-//            addTextWatcherToInputReceiver();
-//            recyclersViewSetting();
-//        }
-//    };
-
-    private final Observer<String> keyOfPlayerWhoseTurnLiveDataObserver = new Observer<String>() {
-        @Override
-        public void onChanged(String keyOfPlayerWhoseTurn) {
-            Log.d(TAG, "changed: " + keyOfPlayerWhoseTurn);
-            Log.d(TAG, "Mykey: " + User.getPlayerUid());
-            if (keyOfPlayerWhoseTurn != null && !keyOfPlayerWhoseTurn.equals(User.getPlayerUid())) {
-                Log.d(TAG, "OPPONENT TURN;");
-                for (int i = 0; i < letterCellButtons.length; i++) {
-                    for (int j = 0; j < letterCellButtons[i].length; j++) {
-                        letterCellButtons[i][j].setEnabled(false);
-                    }
-                }
-            } else if (keyOfPlayerWhoseTurn != null && keyOfPlayerWhoseTurn.equals(User.getPlayerUid())) {
-                Log.d(TAG, "MY TURN;");
-                for (int i = 0; i < letterCellButtons.length; i++) {
-                    for (int j = 0; j < letterCellButtons[i].length; j++) {
-                        letterCellButtons[i][j].setEnabled(true);
-                    }
-                }
-            }
-        }
-    };
-    //endregion
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_game);
-
+        Log.d(TAG, "onCreate() called");
         Intent intent = getIntent();
         String gameRoomKey = intent.getStringExtra(GameActivity.CURRENT_GAME_ROOM_KEY);
 
@@ -148,18 +129,72 @@ public class GameActivity extends AppCompatActivity {
         gameViewModel = new ViewModelProvider(this, new GameViewModelFactory(gameRoomKey)).get(GameViewModel.class);
         gameViewModel.getGameRoomFetchedStatus().observe(GameActivity.this, isGameRoomFetched -> {
             if (isGameRoomFetched) {
-                Log.d(TAG, "gameRoomIsFetched");
-                setStateObservers();
+//                Log.d(TAG, "gameRoomIsFetched");
+                setLiveDataObservers();
             }
         });
 
-        Log.d(TAG, "GAME ROOM KEY FROM INTENT: " + gameRoomKey);
+//        Log.d(TAG, "GAME ROOM KEY FROM INTENT: " + gameRoomKey);
 
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
     }
 
-    private void setStateObservers() {
-        Log.d(TAG, "setStateObservers();");
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart() called");
+        visibilitySetting();
+        if (gameViewModel != null) {
+            if (gameViewModel.getDataConsumedStatus().getValue() != null) {
+                addTextWatcherToInputReceiver();
+            }
+            if (gameViewModel.getGameVocabulary() != null) {
+                gameViewModel.getGameVocabulary().setGameVocabularyListener();
+            }
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        Log.d(TAG, "onStop() called");
+        if (gameViewModel != null) {
+            if (gameViewModel.getDataConsumedStatus().getValue() != null) {
+                removeTextWatcherFromInputReceiver();
+            }
+            if (gameViewModel.getGameVocabulary() != null) {
+                gameViewModel.getGameVocabulary().removeGameVocabularyListener();
+            }
+        }
+        super.onStop();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause() called");
+    }
+
+    @Override
+    protected void onDestroy() {
+        for (Map.Entry<DatabaseReference, LetterCell> entry : gameViewModel.getGameBoard().getRefToLetterCell().entrySet()) {
+//            Log.d(TAG, "subscriber is: " + entry.getValue().getSubscriber());
+            entry.getValue().removeSubscriber();
+        }
+        super.onDestroy();
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            new SurrenderAndLeaveDialogFragment().show(fragmentManager, SurrenderAndLeaveDialogFragment.TAG);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private void setLiveDataObservers() {
+//        Log.d(TAG, "setStateObservers();");
 
         gameViewModel.getTurnTimer().observe(GameActivity.this, new Observer<Long>() {
             @Override
@@ -179,40 +214,59 @@ public class GameActivity extends AppCompatActivity {
 
         gameViewModel.getDataConsumedStatus().observe(GameActivity.this, isDataConsumed -> {
             if (isDataConsumed) {
-                Log.d(TAG, "isDataConsumed = " + isDataConsumed);
+//                Log.d(TAG, "isDataConsumed = " + isDataConsumed);
                 createGameButtons(gameViewModel.getGameRoom().getGameBoardSize());
                 setObservers();
                 addTextWatcherToInputReceiver();
                 recyclersViewSetting();
 
                 gameViewModel.getTurnNewValueSnapshotLiveData().observe(GameActivity.this, turn -> {
-                    if (turn != null) {
+                    if (turn != null && gameViewModel.getGameProcessData().getTurn() != turn) {
+                        gameViewModel.getGameProcessData().setTurn(turn);
                         gameViewModel.getTurnTimer().startTimer(turn.getTurnStartedAt(), timerServerTimeOffset);
-                        gameViewModel.setTurnInGameRoom(turn);
+
+                        if (!turn.getActivePlayerKey().equals(User.fetchPlayerUID())) {
+                            setLetterCellButtonsEnabled(false);
+                        } else {
+                            setLetterCellButtonsEnabled(true);
+                        }
                     }
                 });
             }
         });
-        gameViewModel.getFirstPlayerScoreSnapshotLiveData().observe(GameActivity.this, value -> {
+        gameViewModel.getFirstPlayerScoreNewValueSnapshotLiveData().observe(GameActivity.this, value -> {
             if (value != null) {
-                if (gameViewModel.getGameRoom().getFirstPlayerUID().equals(User.getPlayerUid())) {
-                    Log.d(TAG, "GAME PROCESS DATA: " + gameViewModel.getGameProcessData());
-                    gameViewModel.getGameProcessData().setFirstPlayerScore(value);
-                    playerScore.setText(value.toString());
+                gameViewModel.getGameProcessData().setFirstPlayerScore(value);
+                if (gameViewModel.getGameRoom().getFirstPlayerUID().equals(User.fetchPlayerUID())) {
+                    playerScore.setText(String.valueOf(gameViewModel.getGameProcessData().getFirstPlayerScore()));
                 } else {
-                    gameViewModel.getGameProcessData().setSecondPlayerScore(value);
-                    opponentScore.setText(value.toString());
+                    opponentScore.setText(String.valueOf(gameViewModel.getGameProcessData().getFirstPlayerScore()));
                 }
             }
         });
-        gameViewModel.getSecondPlayerScoreSnapshotLiveData().observe(GameActivity.this, value -> {
+        gameViewModel.getSecondPlayerScoreNewValueSnapshotLiveData().observe(GameActivity.this, value -> {
             if (value != null) {
-                if (gameViewModel.getGameRoom().getSecondPlayerUID().equals(User.getPlayerUid())) {
-                    gameViewModel.getGameProcessData().setSecondPlayerScore(value);
-                    playerScore.setText(value.toString());
+                gameViewModel.getGameProcessData().setSecondPlayerScore(value);
+                if (gameViewModel.getGameRoom().getSecondPlayerUID().equals(User.fetchPlayerUID())) {
+                    playerScore.setText(String.valueOf(gameViewModel.getGameProcessData().getSecondPlayerScore()));
                 } else {
-                    gameViewModel.getGameProcessData().setFirstPlayerScore(value);
-                    opponentScore.setText(value.toString());
+                    opponentScore.setText(String.valueOf(gameViewModel.getGameProcessData().getSecondPlayerScore()));
+                }
+            }
+        });
+        gameViewModel.getFirstPlayerSkippedTurnsNewValueSnapshotLiveData().observe(GameActivity.this, value -> {
+            if (value != null) {
+                gameViewModel.getGameProcessData().setFirstPlayerSkippedTurns(value);
+                if (value == 3) {
+                    //first player lose
+                }
+            }
+        });
+        gameViewModel.getSecondPlayerScoreNewValueSnapshotLiveData().observe(GameActivity.this, value -> {
+            if (value != null) {
+                gameViewModel.getGameProcessData().setSecondPlayerSkippedTurns(value);
+                if (value == 3) {
+                    //second player lose
                 }
             }
         });
@@ -222,36 +276,70 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        visibilitySetting();
-        if (gameViewModel != null) {
-            if (gameViewModel.getDataConsumedStatus().getValue() != null) {
-                addTextWatcherToInputReceiver();
-            }
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        if (gameViewModel != null) {
-            if (gameViewModel.getDataConsumedStatus().getValue() != null) {
-                removeTextWatcherFromInputReceiver();
-            }
-        }
-        super.onStop();
-    }
-
     private void visibilitySetting() {
         View decorView = getWindow().getDecorView();
-        int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
         decorView.setSystemUiVisibility(uiOptions);
     }
 
     private void recyclersViewSetting() {
-        playerDictionaryAdapter = new DictionaryAdapter(gameViewModel.getPlayersVocabulary());
-        opponentDictionaryAdapter = new DictionaryAdapter(gameViewModel.getOpponentsVocabulary());
+        playerDictionaryAdapter = new DictionaryAdapter(playerFoundWords);
+        opponentDictionaryAdapter = new DictionaryAdapter(opponentFoundWords);
+
+        gameViewModel.getGameVocabulary().setGameVocabularyListener();
+        gameViewModel.getGameVocabulary().getFoundWords().addOnListChangedCallback(new ObservableList.OnListChangedCallback() {
+            @Override
+            public void onChanged(ObservableList sender) {
+
+            }
+
+            @Override
+            public void onItemRangeChanged(ObservableList sender, int positionStart, int itemCount) {
+
+            }
+
+            @Override
+            public void onItemRangeInserted(ObservableList sender, int positionStart, int itemCount) {
+//                Log.d(TAG, "onItemRangeInserted");
+//                Log.d(TAG, "POSITION START: " + positionStart + "; ITEM COUNT: " + itemCount);
+                for (int i = positionStart; i < (positionStart + itemCount); i++) {
+                    FoundWord word = (FoundWord) sender.get(positionStart);
+//                    Log.d(TAG, "onItemRangeInserted(); word: " + word);
+
+                    if (word.getPlayerKey().equals(User.fetchPlayerUID())) {
+                        playerFoundWords.add(word);
+//                        Log.d(TAG, "playerFoundWords.add(word); word: " + word);
+                        playerDictionaryAdapter.notifyItemInserted(playerFoundWords.size() - 1);
+                    } else if (word.getPlayerKey().equals(gameViewModel.getGameRoom().getOpponentKey())) {
+                        opponentFoundWords.add(word);
+//                        Log.d(TAG, "opponentFoundWords.add(word); word: " + word);
+                        opponentDictionaryAdapter.notifyItemInserted(opponentFoundWords.size() - 1);
+                    }
+                }
+
+            }
+
+            @Override
+            public void onItemRangeMoved(ObservableList sender, int fromPosition, int toPosition, int itemCount) {
+
+            }
+
+            @Override
+            public void onItemRangeRemoved(ObservableList sender, int positionStart, int itemCount) {
+                for (int i = positionStart; i < itemCount; i++) {
+                    FoundWord word = (FoundWord) sender.get(positionStart);
+                    if (word.getPlayerKey().equals(User.fetchPlayerUID())) {
+                        playerFoundWords.remove(word);
+                        playerDictionaryAdapter.notifyItemRemoved(playerFoundWords.size() - 1);
+                    }
+                }
+            }
+        });
 
         recyclerViewPlayerDictionary.setAdapter(playerDictionaryAdapter);
         recyclerViewOpponentDictionary.setAdapter(opponentDictionaryAdapter);
@@ -317,7 +405,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void setObservers() {
-        Log.d(TAG, "setObservers() INVOKED");
+//        Log.d(TAG, "setObservers() INVOKED");
         for (int i = 0; i < gameViewModel.getArrayListOfLetterCellLiveData().size(); i++) {
             gameViewModel.getArrayListOfLetterCellLiveData().get(i).observe(GameActivity.this, updatedCell -> {
 
@@ -333,7 +421,7 @@ public class GameActivity extends AppCompatActivity {
                                 .checkIfLetterIsPartOfCombination(letterCellFromViewModel.getRowIndex(), letterCellFromViewModel.getColumnIndex())) {
                             gameViewModel.getGameBoard().writeMementoForLetterCell(letterCellFromViewModel);
 
-                            Log.d(TAG, "setObservers(); onChanged(); LetterCell updatedCell: " + updatedCell);
+//                            Log.d(TAG, "setObservers(); onChanged(); LetterCell updatedCell: " + updatedCell);
                             letterCellFromViewModel.setStateAndNotifySubscriber(updatedCell.getState());
                             letterCellFromViewModel.setLetterAndNotifySubscriber(updatedCell.getLetter());
                         }
@@ -342,29 +430,14 @@ public class GameActivity extends AppCompatActivity {
                 }
             });
         }
-
-//        gameViewModel.getActivePlayerKeyLiveData().observe(GameActivity.this, keyOfPlayerWhoseTurnLiveDataObserver);
-
-//        gameViewModel.getIntervalLiveData().observe(GameActivity.this, interval ->{
-//            if(!(interval <= 0)) {
-//                long minutes = (interval / 1000) / 60;
-//                long seconds = (interval / 1000) % 60;
-//                Log.d(TAG, "INTERVAL: " + interval);
-////                String time = String.valueOf(minutes) + " : " + String.valueOf(seconds);
-//                String time = String.format("%s : %s", minutes, seconds);
-//                textViewTimer.setText(time);
-//            }else {
-//                gameViewModel.endTurn(TurnTerminationCode.TIME_IS_UP);
-//                //INITIATE TURN END;
-//            }
-//        });
     }
 
     private void viewsSettings() {
         inputReceiver = findViewById(R.id.input_receiver);
         gameBoardLayout = findViewById(R.id.game_board_layout);
         buttonConfirmCombination = findViewById(R.id.buttonConfirmCombination);
-        buttonSkipTurn = findViewById(R.id.buttonSkipTurn);
+        skipTurnButton = findViewById(R.id.skipTurnButton);
+        buttonSurrender = findViewById(R.id.buttonSurrender);
         textViewTimer = findViewById(R.id.textViewTimer);
         playerScore = findViewById(R.id.playerScore);
         opponentScore = findViewById(R.id.opponentScore);
@@ -386,6 +459,13 @@ public class GameActivity extends AppCompatActivity {
             if (!gameViewModel.endTurn(TurnTerminationCode.COMBINATION_SUBMITTED)) {
                 Log.d(TAG, "endTurn: error");
             }
+//            else if(){
+//
+//            }
+        });
+        buttonSurrender.setOnClickListener(click -> {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            new SurrenderDialogFragment().show(fragmentManager, SurrenderDialogFragment.TAG);
         });
     }
 
@@ -406,13 +486,13 @@ public class GameActivity extends AppCompatActivity {
             for (int j = 0; j < gameGridSize; j++) { //columns
 
                 LetterCellButton letterCellButton = new LetterCellButton(this);
-                Log.d(TAG, "created: " + letterCellButton);
+//                Log.d(TAG, "created: " + letterCellButton);
                 letterCellButtons[i][j] = letterCellButton;
 
                 LetterCell letterCell = gameViewModel
                         .getGameBoard().getLetterCellByRowAndColumn(i, j);
 
-                Log.d(TAG, "createGameButtons(); LetterCell object is: " + letterCell);
+//                Log.d(TAG, "createGameButtons(); LetterCell object is: " + letterCell);
                 letterCell.addSubscriber(letterCellButton);
                 letterCell.notifySubscriberAboutLetterChange();
                 letterCell.notifySubscriberAboutStateChange();
@@ -481,108 +561,33 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        for (Map.Entry<DatabaseReference, LetterCell> entry : gameViewModel.getGameBoard().getRefToLetterCell().entrySet()) {
-            Log.d(TAG, "subscriber is: " + entry.getValue().getSubscriber());
-            entry.getValue().removeSubscriber();
+    private void setLetterCellButtonsEnabled(boolean enabled) {
+        for (int j = 0; j < letterCellButtons[0].length; j++) {
+            for (int i = 0; i < letterCellButtons.length; i++) {
+                letterCellButtons[i][j].setEnabled(enabled);
+            }
         }
-        super.onDestroy();
+    }
+
+    @Override
+    public void onSurrenderAndLeaveYesAnswer(DialogFragment dialog) {
+        Log.d(TAG, "onSurrenderAndLeaveYesAnswer");
+
+        finish();
+    }
+
+    @Override
+    public void onSurrenderAndLeaveNoAnswer(DialogFragment dialog) {
+        Log.d(TAG, "onSurrenderAndLeaveNoAnswer");
+    }
+
+    @Override
+    public void onSurrenderYesAnswer(DialogFragment dialog) {
+        Log.d(TAG, "dialog YES answer received");
+    }
+
+    @Override
+    public void onSurrenderNoAnswer(DialogFragment dialog) {
+        Log.d(TAG, "dialog NO answer received");
     }
 }
-
-/*
-            gameViewModel.turnOnVocabularyListener();
-            gameViewModel.getPlayersVocabulary().addOnListChangedCallback(new ObservableList.OnListChangedCallback() {
-                @Override
-                public void onChanged(ObservableList sender) {
-
-                }
-
-                @Override
-                public void onItemRangeChanged(ObservableList sender, int positionStart, int itemCount) {
-
-                }
-
-                @Override
-                public void onItemRangeInserted(ObservableList sender, int positionStart, int itemCount) {
-                    Log.d(TAG, "positionStart: " + positionStart + "; itemCount: " + itemCount);
-                    for(int i = positionStart; i < (positionStart + itemCount); i++){
-                        playerDictionaryAdapter.notifyItemInserted(i);
-                    }
-                }
-
-                @Override
-                public void onItemRangeMoved(ObservableList sender, int fromPosition, int toPosition, int itemCount) {
-
-                }
-
-                @Override
-                public void onItemRangeRemoved(ObservableList sender, int positionStart, int itemCount) {
-                    for(int i = positionStart; i < (positionStart + itemCount); i++){
-                        playerDictionaryAdapter.notifyItemRemoved(i);
-                    }
-                }
-            });
-            gameViewModel.getOpponentsVocabulary().addOnListChangedCallback(new ObservableList.OnListChangedCallback() {
-                @Override
-                public void onChanged(ObservableList sender) {
-
-                }
-
-                @Override
-                public void onItemRangeChanged(ObservableList sender, int positionStart, int itemCount) {
-
-                }
-
-                @Override
-                public void onItemRangeInserted(ObservableList sender, int positionStart, int itemCount) {
-                    for(int i = positionStart; i < (positionStart + itemCount); i++){
-                        opponentDictionaryAdapter.notifyItemInserted(i);
-                    }
-                }
-
-                @Override
-                public void onItemRangeMoved(ObservableList sender, int fromPosition, int toPosition, int itemCount) {
-
-                }
-
-                @Override
-                public void onItemRangeRemoved(ObservableList sender, int positionStart, int itemCount) {
-                    for(int i = positionStart; i < (positionStart + itemCount); i++){
-                        opponentDictionaryAdapter.notifyItemRemoved(i);
-                    }
-                }
-            });
-            gameViewModel.getLettersCombination().addOnListChangedCallback(new ObservableList.OnListChangedCallback() {
-                @Override
-                public void onChanged(ObservableList sender) {
-
-                }
-
-                @Override
-                public void onItemRangeChanged(ObservableList sender, int positionStart, int itemCount) {
-
-                }
-
-                @Override
-                public void onItemRangeInserted(ObservableList sender, int positionStart, int itemCount) {
-                    for(int i = positionStart; i < (positionStart + itemCount); i++){
-                        showPanelAdapter.notifyItemInserted(i);
-                    }
-                }
-
-                @Override
-                public void onItemRangeMoved(ObservableList sender, int fromPosition, int toPosition, int itemCount) {
-
-                }
-
-                @Override
-                public void onItemRangeRemoved(ObservableList sender, int positionStart, int itemCount) {
-                    for(int i = positionStart; i < (positionStart + itemCount); i++){
-                        showPanelAdapter.notifyItemRemoved(i);
-                    }
-                }
-            });
-
- */

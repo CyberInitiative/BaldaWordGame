@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/golden_rice"
     android:orientation="vertical"
-    tools:context=".GameCreationFragment">
+    tools:context=".fragment.GameCreationFragment">
 
     <TextView
         android:id="@+id/textViewGameRoomCreationLabel"

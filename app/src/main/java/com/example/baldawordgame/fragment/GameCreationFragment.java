@@ -1,4 +1,4 @@
-package com.example.baldawordgame;
+package com.example.baldawordgame.fragment;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -19,6 +19,8 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.example.baldawordgame.GameActivity;
+import com.example.baldawordgame.R;
 import com.example.baldawordgame.model.GameRoom;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -241,8 +243,8 @@ public class GameCreationFragment extends Fragment {
         } else if (radioButtonTimerOnMinute.isChecked()) {
             return (60);
         }
-        return (10);
-//        return (2 * 60);
+//        return (10);
+        return (2 * 60);
     }
 
 }

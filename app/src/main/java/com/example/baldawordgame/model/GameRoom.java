@@ -32,7 +32,6 @@ public class GameRoom {
     private String gameRoomStatus;
     private String dataState;
     private int gameBoardSize;
-    private Turn turn;
     private int turnDuration;
 
     public GameRoom() {
@@ -41,7 +40,7 @@ public class GameRoom {
 
     public GameRoom(String gameRoomKey, int gameBoardSize, int turnDuration) {
         this.gameRoomKey = gameRoomKey;
-        this.firstPlayerUID = User.getPlayerUid();
+        this.firstPlayerUID = User.fetchPlayerUID();
         this.gameBoardSize = gameBoardSize;
         this.turnDuration = turnDuration;
         this.dataState = DataStatus.DATA_NOT_PREPARED;
@@ -77,7 +76,7 @@ public class GameRoom {
         return GAME_ROOMS_REF.child(key).get()
                 .continueWith(task -> {
                     GameRoom gameRoom = task.getResult().getValue(GameRoom.class);
-                    if(gameRoom != null){
+                    if (gameRoom != null) {
                         gameRoom.gameRoomKey = key;
                     }
                     Log.d(TAG, "fetchGameRoom(); " + gameRoom);
@@ -85,17 +84,13 @@ public class GameRoom {
                 });
     }
 
-    public Task<Void> writeDataState(@NonNull String gameState){
+    public Task<Void> writeDataState(@NonNull String gameState) {
         return GAME_ROOMS_REF.child(gameRoomKey).child(DATA_STATE_PATH).setValue(gameState);
     }
 
-    public NewValueSnapshotLiveData<String> getDataStateUniqueSnapshotLiveData(){
+    public NewValueSnapshotLiveData<String> getDataStateUniqueSnapshotLiveData() {
         return new NewValueSnapshotLiveData<>(GAME_ROOMS_REF.child(gameRoomKey).child(DATA_STATE_PATH), String.class);
     }
-//
-//    public NewValueSnapshotLiveData<Turn> getTurnUniqueSnapshotLiveData(){
-//        return new NewValueSnapshotLiveData<>(GAME_ROOMS_REF.child(gameRoomKey).child(TURN), Turn.class);
-//    }
 
     //region GETTERS
     @Exclude
@@ -106,35 +101,34 @@ public class GameRoom {
     public String getFirstPlayerUID() {
         return firstPlayerUID;
     }
+
     public String getSecondPlayerUID() {
         return secondPlayerUID;
     }
+
     public int getGameBoardSize() {
         return gameBoardSize;
     }
+
     public int getTurnDuration() {
         return turnDuration;
     }
-    public Turn getTurn() {
-        return turn;
-    }
+
     public String getGameRoomStatus() {
         return gameRoomStatus;
     }
+
     public String getDataState() {
         return dataState;
     }
-    public String getOpponentKey(){
-        if(User.getPlayerUid().equals(firstPlayerUID)){
+
+    public String getOpponentKey() {
+        if (User.fetchPlayerUID().equals(firstPlayerUID)) {
             return secondPlayerUID;
         } else
             return firstPlayerUID;
     }
     //endregion
-
-    public void setTurn(Turn turn) {
-        this.turn = turn;
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -162,10 +156,11 @@ public class GameRoom {
                 '}';
     }
 
-    public static final class RoomStatus{
+    public static final class RoomStatus {
         public static final String OPEN_GAME_ROOM = "OPEN_GAME_ROOM";
         public static final String FULL_GAME_ROOM = "FULL_GAME_ROOM";
     }
+
     public static final class DataStatus {
         public static final String DATA_NOT_PREPARED = "DATA_NOT_PREPARED";
         public static final String DATA_PREPARED = "DATA_PREPARED";

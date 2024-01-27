@@ -2,9 +2,6 @@ package com.example.baldawordgame.model;
 
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
-import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.FirebaseDatabase;
@@ -21,7 +18,7 @@ public class Dictionary {
     //для достижения неинстанцируемости
     private Dictionary() {throw new AssertionError();}
 
-    public static Task<Void> loadDictionaryFromFirebase() {
+    public static Task<Void> fetchDictionary() {
         Task<Void> loadDictionaryTask = FirebaseDatabase.getInstance().getReference().child("dictionary").get()
                 .continueWith(task -> {
                     for (DataSnapshot dataSnapshot : task.getResult().getChildren()) {

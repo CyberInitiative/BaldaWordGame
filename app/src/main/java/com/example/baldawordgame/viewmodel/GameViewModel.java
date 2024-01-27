@@ -5,22 +5,23 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.arch.core.util.Function;
 import androidx.databinding.ObservableArrayList;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.baldawordgame.model.Dictionary;
-import com.example.baldawordgame.model.FoundedWord;
-import com.example.baldawordgame.GameVocabulary;
+import com.example.baldawordgame.model.FoundWord;
+import com.example.baldawordgame.model.GameVocabulary;
 import com.example.baldawordgame.model.GameProcessData;
 import com.example.baldawordgame.model.LetterCell;
-import com.example.baldawordgame.LetterCellLiveData;
-import com.example.baldawordgame.livedata.SnapshotLiveData;
+import com.example.baldawordgame.livedata.LetterCellLiveData;
 import com.example.baldawordgame.TurnTerminationCode;
 import com.example.baldawordgame.livedata.NewValueSnapshotLiveData;
+import com.example.baldawordgame.model.Rematch;
 import com.example.baldawordgame.model.User;
 import com.example.baldawordgame.model.GameBoard;
 import com.example.baldawordgame.model.GameRoom;
-import com.example.baldawordgame.livedata.TurnTimerLiveData;
+import com.example.baldawordgame.livedata.TimerLiveData;
 import com.example.baldawordgame.model.Turn;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -32,22 +33,25 @@ import java.util.ArrayList;
 public class GameViewModel extends ViewModel {
     private static final String TAG = "GameViewModel";
 
+    //region LIVEDATA OBJECTS
     private final MutableLiveData<Boolean> gameRoomFetchedStatus = new MutableLiveData<>();
     private final MutableLiveData<Boolean> dataConsumedStatus = new MutableLiveData<>();
-
-    private NewValueSnapshotLiveData<Integer> firstPlayerScoreSnapshotLiveData, secondPlayerScoreSnapshotLiveData;
+    private NewValueSnapshotLiveData<Integer> firstPlayerScoreNewValueSnapshotLiveData, secondPlayerScoreNewValueSnapshotLiveData;
+    private NewValueSnapshotLiveData<Integer> firstPlayerSkippedTurnsNewValueSnapshotLiveData, secondPlayerSkippedTurnsNewValueSnapshotLiveData;
+    private NewValueSnapshotLiveData<Integer> firstPlayerStatusCodeNewValueSnapshotLiveData, secondPlayerStatusCodeNewValueSnapshotLiveData;
     private NewValueSnapshotLiveData<String> dataStateNewValueSnapshotLiveData;
     private NewValueSnapshotLiveData<Turn> turnNewValueSnapshotLiveData;
+
     private NewValueSnapshotLiveData<Long> serverOffsetNewValueSnapshotLiveData =
             new NewValueSnapshotLiveData<>(FirebaseDatabase.getInstance().getReference(".info/serverTimeOffset"), Long.class);
-
+    private TimerLiveData timerLiveData;
     private ArrayList<LetterCellLiveData> arrayListOfLetterCellLiveData;
+    //endregion
 
     private GameRoom gameRoom;
     private GameBoard gameBoard;
     private GameVocabulary gameVocabulary;
     private GameProcessData gameProcessData;
-    private TurnTimerLiveData turnTimerLiveData;
 
     public GameViewModel(@NonNull String gameRoomKey) {
         GameRoom.fetchGameRoom(gameRoomKey).addOnCompleteListener(task -> {
@@ -57,30 +61,29 @@ public class GameViewModel extends ViewModel {
             gameVocabulary = new GameVocabulary(gameRoomKey);
             gameProcessData = new GameProcessData(gameRoomKey);
 
-            turnTimerLiveData = new TurnTimerLiveData(gameRoom.getTurnDuration());
+            timerLiveData = new TimerLiveData(gameRoom.getTurnDuration());
 
             this.dataStateNewValueSnapshotLiveData = gameRoom.getDataStateUniqueSnapshotLiveData();
-            this.turnNewValueSnapshotLiveData = gameProcessData.getTurnUniqueSnapshotLiveData();
+            this.turnNewValueSnapshotLiveData = gameProcessData.getTurnUniqueNewValueSnapshotLiveData();
 
-            this.firstPlayerScoreSnapshotLiveData = gameProcessData.getFirstPlayerScoreSnapshotLiveData();
-            this.secondPlayerScoreSnapshotLiveData = gameProcessData.getSecondPlayerScoreSnapshotLiveData();
+            this.firstPlayerScoreNewValueSnapshotLiveData = gameProcessData.getFirstPlayerScoreNewValueSnapshotLiveData();
+            this.secondPlayerScoreNewValueSnapshotLiveData = gameProcessData.getSecondPlayerScoreNewValueSnapshotLiveData();
+
+            this.firstPlayerSkippedTurnsNewValueSnapshotLiveData = gameProcessData.getFirstPlayerSkippedTurnsNewValueSnapshotLiveData();
+            this.secondPlayerSkippedTurnsNewValueSnapshotLiveData = gameProcessData.getSecondPlayerSkippedTurnsNewValueSnapshotLiveData();
+
+//            this.firstPlayerStatusCodeNewValueSnapshotLiveData = gameProcessData.getFirstPlayerStatusCodeNewValueSnapshotLiveData();
+//            this.secondPlayerStatusCodeNewValueSnapshotLiveData = gameProcessData.getSecondPlayerStatusCodeNewValueSnapshotLiveData();
 
             gameRoomFetchedStatus.setValue(true);
         });
     }
 
-    public Task<Void> writeScore(int score){
-        if(gameRoom.getFirstPlayerUID().equals(User.getPlayerUid())){
-            return gameProcessData.writeFirstPlayerScore(score);
-        }
-        return gameProcessData.writeSecondPlayerScore(score);
-    }
-
     public void reactToGameStageUpdated(String gameStage) {
         if (gameStage != null) {
-            if (User.getPlayerUid().equals(gameRoom.getFirstPlayerUID())) {
+            if (User.fetchPlayerUID().equals(gameRoom.getFirstPlayerUID())) {
                 hostReaction(gameStage);
-            } else if (User.getPlayerUid().equals(gameRoom.getSecondPlayerUID())) {
+            } else if (User.fetchPlayerUID().equals(gameRoom.getSecondPlayerUID())) {
                 guestReaction(gameStage);
             }
         }
@@ -91,7 +94,7 @@ public class GameViewModel extends ViewModel {
             case GameRoom.DataStatus.DATA_NOT_PREPARED:
                 String randomWord = Dictionary.getRandomWordOfACertainLength(gameRoom.getGameBoardSize());
 
-                Task<Void> initialWordWritingTask = gameVocabulary.writeInitialWord(randomWord);
+                Task<Void> initialWordWritingTask = gameVocabulary.addWord(randomWord, FoundWord.INITIAL_WORD_KEY);
                 Task<Void> gameBoardCreationTask = gameBoard.createGameBoard(randomWord);
 
                 Tasks.whenAll(initialWordWritingTask, gameBoardCreationTask /*,tossingUpTask*/).addOnCompleteListener(task -> {
@@ -101,7 +104,7 @@ public class GameViewModel extends ViewModel {
                 break;
             case GameRoom.DataStatus.DATA_PREPARED:
                 if (dataConsumedStatus.getValue() == null || !dataConsumedStatus.getValue()) {
-                    gameBoard.getGameBoard()
+                    gameBoard.fetchGameBoard()
                             .continueWith(task -> arrayListOfLetterCellLiveData = gameBoard.getLetterCellLiveDataArrayList())
                             .addOnCompleteListener(task -> {
                                 dataConsumedStatus.setValue(true);
@@ -120,41 +123,38 @@ public class GameViewModel extends ViewModel {
             case GameRoom.DataStatus.DATA_PREPARED:
                 Log.d(TAG, "prepared");
                 if (dataConsumedStatus.getValue() == null || !dataConsumedStatus.getValue()) {
-                    gameBoard.getGameBoard()
+                    gameBoard.fetchGameBoard()
                             .continueWith(task ->
                                     arrayListOfLetterCellLiveData = gameBoard.getLetterCellLiveDataArrayList())
-                            .continueWithTask(task -> gameVocabulary.fetchInitialWord())
                             .addOnCompleteListener(task -> dataConsumedStatus.setValue(true));
                 }
                 break;
         }
     }
 
-    public ObservableArrayList<FoundedWord> getOpponentsVocabulary() {
-        return gameVocabulary.getOpponentsVocabulary();
+    public Task<Void> writeScore(int score) {
+        if (gameRoom.getFirstPlayerUID().equals(User.fetchPlayerUID())) {
+            return gameProcessData.writeFirstPlayerScore(score);
+        } else if (gameRoom.getSecondPlayerUID().equals(User.fetchPlayerUID())) {
+            return gameProcessData.writeSecondPlayerScore(score);
+        }
+       return null;
     }
 
-    public ObservableArrayList<FoundedWord> getPlayersVocabulary() {
-        return gameVocabulary.getPlayersVocabulary();
-    }
-
-    public ObservableArrayList<LetterCell> getLettersCombination() {
-        return gameBoard.getLettersCombination();
-    }
-
-    public void turnOnVocabularyListener() {
-        gameVocabulary.turnOnVocabularyListener();
-    }
-
-    public void turnOffVocabularyListener() {
-        gameVocabulary.turnOffVocabularyListener();
+    public Task<Void> writeRematchData(){
+        if (gameRoom.getFirstPlayerUID().equals(User.fetchPlayerUID())) {
+            return gameProcessData.writeRematchOffering(Rematch.firstPlayerOfferedRematch());
+        } else if (gameRoom.getSecondPlayerUID().equals(User.fetchPlayerUID())) {
+            return gameProcessData.writeRematchOffering(Rematch.secondPlayerOfferedRematch());
+        }
+        return null;
     }
 
     private boolean confirmCombination() {
         if (gameBoard.checkCombinationConditions()) {
             String word = gameBoard.makeUpWordFromCombination();
             if (gameVocabulary.checkWord(word).equals(GameVocabulary.WordCheckResult.NEW_WORD_FOUNDED)) {
-                gameVocabulary.addWord(word)
+                gameVocabulary.addWord(word, User.fetchPlayerUID())
                         .continueWithTask(task -> gameBoard.writeLetterCell())
                         .continueWithTask(task -> writeScore(word.length()));
 //                        .continueWithTask(task -> gameProcessData.writeActivePlayerKey(gameRoom.getOpponentKey()));
@@ -167,7 +167,7 @@ public class GameViewModel extends ViewModel {
     public boolean endTurn(TurnTerminationCode turnTerminationCode) {
         switch (turnTerminationCode) {
             case TIME_IS_UP:
-                if (gameRoom.getTurn().getActivePlayerKey().equals(User.getPlayerUid())) {
+                if (gameProcessData.getTurn().getActivePlayerKey().equals(User.fetchPlayerUID())) {
                     gameBoard.eraseEverything();
                     gameProcessData.writeTurn(gameRoom.getOpponentKey());
                 }
@@ -178,6 +178,16 @@ public class GameViewModel extends ViewModel {
                 break;
             case COMBINATION_SUBMITTED:
                 if (confirmCombination()) {
+                    gameProcessData.writeTurn(gameRoom.getOpponentKey());
+//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+//                        Thread thread = new Thread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                GameAnalyzer.checkIfThereAreAvailableTurns(gameBoard.getLetterCellsArrayList(), gameVocabulary.getFoundWords());
+//                            }
+//                        });
+//                        thread.start();
+//                    }
                     return true;
                 }
                 break;
@@ -198,16 +208,36 @@ public class GameViewModel extends ViewModel {
         return gameProcessData;
     }
 
-    public MutableLiveData<Boolean> getDataConsumedStatus() {
+    public GameVocabulary getGameVocabulary() {
+        return gameVocabulary;
+    }
+
+    public LiveData<Boolean> getDataConsumedStatus() {
         return dataConsumedStatus;
     }
 
-    public ArrayList<LetterCellLiveData> getArrayListOfLetterCellLiveData() {
-        return arrayListOfLetterCellLiveData;
+    public LiveData<String> getGameStageUniqueSnapshotLiveData() {
+        return dataStateNewValueSnapshotLiveData;
     }
 
-    public NewValueSnapshotLiveData<String> getGameStageUniqueSnapshotLiveData() {
-        return dataStateNewValueSnapshotLiveData;
+    public LiveData<Boolean> getGameRoomFetchedStatus() {
+        return gameRoomFetchedStatus;
+    }
+
+    public LiveData<Integer> getFirstPlayerScoreNewValueSnapshotLiveData() {
+        return firstPlayerScoreNewValueSnapshotLiveData;
+    }
+
+    public LiveData<Integer> getFirstPlayerSkippedTurnsNewValueSnapshotLiveData() {
+        return firstPlayerSkippedTurnsNewValueSnapshotLiveData;
+    }
+
+    public LiveData<Integer> getSecondPlayerScoreNewValueSnapshotLiveData() {
+        return secondPlayerScoreNewValueSnapshotLiveData;
+    }
+
+    public LiveData<Integer> getSecondPlayerSkippedTurnsNewValueSnapshotLiveData() {
+        return secondPlayerSkippedTurnsNewValueSnapshotLiveData;
     }
 
     public NewValueSnapshotLiveData<Turn> getTurnNewValueSnapshotLiveData() {
@@ -218,26 +248,21 @@ public class GameViewModel extends ViewModel {
         return serverOffsetNewValueSnapshotLiveData;
     }
 
-    public MutableLiveData<Boolean> getGameRoomFetchedStatus() {
-        return gameRoomFetchedStatus;
+//    public NewValueSnapshotLiveData<Integer> getFirstPlayerStatusCodeNewValueSnapshotLiveData() {
+//        return firstPlayerStatusCodeNewValueSnapshotLiveData;
+//    }
+
+//    public NewValueSnapshotLiveData<Integer> getSecondPlayerStatusCodeNewValueSnapshotLiveData() {
+//        return secondPlayerStatusCodeNewValueSnapshotLiveData;
+//    }
+
+    public TimerLiveData getTurnTimer() {
+        return timerLiveData;
     }
 
-    public NewValueSnapshotLiveData<Integer> getFirstPlayerScoreSnapshotLiveData() {
-        return firstPlayerScoreSnapshotLiveData;
+    public ArrayList<LetterCellLiveData> getArrayListOfLetterCellLiveData() {
+        return arrayListOfLetterCellLiveData;
     }
-
-    public NewValueSnapshotLiveData<Integer> getSecondPlayerScoreSnapshotLiveData() {
-        return secondPlayerScoreSnapshotLiveData;
-    }
-
-    public void setTurnInGameRoom(Turn turn) {
-        gameRoom.setTurn(turn);
-    }
-
-    public TurnTimerLiveData getTurnTimer() {
-        return turnTimerLiveData;
-    }
-
     //endregion
 
     //region INNER CLASSES
@@ -262,4 +287,5 @@ public class GameViewModel extends ViewModel {
         }
     }
     //endregion
+
 }

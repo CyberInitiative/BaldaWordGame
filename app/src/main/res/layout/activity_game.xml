@@ -166,7 +166,7 @@
                 android:id="@+id/textViewPlayerDictionaryLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
+                android:layout_marginStart="5dp"
                 android:layout_marginBottom="5dp"
                 android:background="@drawable/text_view_drawable"
                 android:fontFamily="@font/kelly_slab_regular"
@@ -265,15 +265,27 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <android.widget.Button
-            android:id="@+id/buttonSkipTurn"
+            android:id="@+id/buttonSurrender"
             android:layout_width="65dp"
             android:layout_height="65dp"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
             android:background="@drawable/round_button_drawable"
             android:fontFamily="@font/kelly_slab_regular"
-            android:text="@string/button_skip_turn_text"
+            android:text="SUR"
             android:textColor="@color/black"
+            android:textSize="14sp" />
+
+        <ImageButton
+            android:id="@+id/skipTurnButton"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/round_button_drawable"
+            android:fontFamily="@font/kelly_slab_regular"
+            android:textColor="@color/black"
+            android:src="@drawable/ic_skip_turn"
             android:textSize="14sp" />
 
         <ImageButton

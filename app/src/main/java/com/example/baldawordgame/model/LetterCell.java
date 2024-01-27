@@ -15,7 +15,7 @@ public class LetterCell {
     private int rowIndex;
     private String letter;
     private String state;
-    private transient Subscriber subscriber;
+    private Subscriber subscriber;
 
     public interface Subscriber {
         void processUpdatedGameCellState(String cellState);
@@ -122,23 +122,25 @@ public class LetterCell {
         }
     }
 
-    @Exclude
+
     public static final String LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE = "LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE";
-    @Exclude
+
     public static final String LETTER_CELL_UNAVAILABLE_WITHOUT_LETTER_STATE = "LETTER_CELL_UNAVAILABLE_WITHOUT_LETTER_STATE";
-    @Exclude
+
     public static final String LETTER_CELL_WITH_LETTER_STATE = "LETTER_CELL_WITH_LETTER_STATE";
-    @Exclude
+
     public static final String LETTER_CELL_SELECTED_AS_PART_OF_COMBINATION_STATE = "LETTER_CELL_SELECTED_AS_PART_OF_COMBINATION_STATE";
     //В эту клетку игрок вставил букву;
-    @Exclude
+
     public static final String LETTER_CELL_INTENDED_STATE = "LETTER_CELL_INTENDED_STATE";
     //Клетка со вставленной игроком буквой стала частью комбинации букв, формирующих слово;
-    @Exclude
+
     public static final String LETTER_CELL_INTENDED_SELECTED_AS_PART_OF_COMBINATION_STATE = "LETTER_CELL_INTENDED_SELECTED_AS_PART_OF_COMBINATION_STATE";
-    @Exclude
+
     public static final String LETTER_CELL_UNDEFINED_STATE = "LETTER_CELL_UNDEFINED_STATE";
-    @Exclude
+
+    public static final String SUBSTITUTED_STATE = "SUBSTITUTED_STATE";
+
     public static final String NO_LETTER_PLUG = "NO_LETTER_PLUG";
 
     @NonNull

@@ -10,6 +10,7 @@ public class Turn {
 
     private long turnStartedAt;
     private String activePlayerKey;
+
     public Turn(){}
 
     public long getTurnStartedAt() {
@@ -18,6 +19,14 @@ public class Turn {
 
     public String getActivePlayerKey() {
         return activePlayerKey;
+    }
+
+    @Override
+    public String toString() {
+        return "Turn{" +
+                "turnStartedAt=" + turnStartedAt +
+                ", activePlayerKey='" + activePlayerKey + '\'' +
+                '}';
     }
 
     @Override

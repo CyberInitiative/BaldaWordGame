@@ -47,6 +47,10 @@
     <string name="profile_tab_text">Профиль</string>
     <string name="game_rooms_tab_text">Комнаты</string>
     <string name="create_room_tab_text">Создать комнату</string>
+    <string name="surrender_text_view">Хотите признать поражение?</string>
+    <string name="surrender_and_leave">Хотите покинуть комнату и признать поражение?</string>
+    <string name="yes_text_view">Да</string>
+    <string name="no_text_view">Нет</string>
 
     <string name="room_list_status_empty">Список пуст</string>
     <string name="room_list_status_loading">Загрузка…</string>
