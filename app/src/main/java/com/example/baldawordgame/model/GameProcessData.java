@@ -18,7 +18,7 @@ public class GameProcessData {
     //region PATH STRINGS
     public static final String GAME_PROCESS_DATA_PATH = "gameProcessData";
     public static final String GAME_STATUS_PATH = "gameStatus";
-    public static final String ACTIVE_HOST_UID_PATH = "activeSupervisorUI";
+    public static final String HOST_PLAYER_UID_PATH = "hostPlayerUID";
     public static final String TURN_PATH = "turn";
     public static final String FIRST_PLAYER_SCORE_PATH = "firstPlayerScore";
     public static final String SECOND_PLAYER_SCORE_PATH = "secondPlayerScore";
@@ -27,6 +27,7 @@ public class GameProcessData {
     public static final String FIRST_PLAYER_STATUS_CODE_PATH = "firstPlayerStatusCode";
     public static final String SECOND_PLAYER_STATUS_CODE_PATH = "secondPlayerStatusCode";
     public static final String REMATCH_PATH = "rematch";
+    public static final String GAME_OVER_CODE_PATH = "gameOverCode";
     //endregion
 
     //region DATABASE REFS
@@ -34,7 +35,6 @@ public class GameProcessData {
             = FirebaseDatabase.getInstance().getReference().child(GAME_PROCESS_DATA_PATH);
     private DatabaseReference currGameProcessDataRef;
     private DatabaseReference gameStatusRef;
-    private DatabaseReference activeHostRef;
     private DatabaseReference turnRef;
     private DatabaseReference firstPlayerScoreRef;
     private DatabaseReference secondPlayerScoreRef;
@@ -43,6 +43,8 @@ public class GameProcessData {
     private DatabaseReference firstPlayerStatusCodeRef;
     private DatabaseReference secondPlayerStatusCodeRef;
     private DatabaseReference rematchRef;
+    private DatabaseReference gameOverCodeRef;
+    private DatabaseReference hostPlayerUIDRef;
     //endregion
 
     private int firstPlayerScore, secondPlayerScore;
@@ -60,7 +62,7 @@ public class GameProcessData {
         //region DatabaseRefs init;
         currGameProcessDataRef = ALL_GAME_PROCESS_DATA_REF.child(gameRoomKey);
         gameStatusRef = currGameProcessDataRef.child(GAME_STATUS_PATH);
-        activeHostRef = currGameProcessDataRef.child(ACTIVE_HOST_UID_PATH);
+        hostPlayerUIDRef = currGameProcessDataRef.child(HOST_PLAYER_UID_PATH);
         turnRef = currGameProcessDataRef.child(TURN_PATH);
         firstPlayerScoreRef = currGameProcessDataRef.child(FIRST_PLAYER_SCORE_PATH);
         secondPlayerScoreRef = currGameProcessDataRef.child(SECOND_PLAYER_SCORE_PATH);
@@ -69,6 +71,7 @@ public class GameProcessData {
         firstPlayerStatusCodeRef = currGameProcessDataRef.child(FIRST_PLAYER_STATUS_CODE_PATH);
         secondPlayerStatusCodeRef = currGameProcessDataRef.child(SECOND_PLAYER_STATUS_CODE_PATH);
         rematchRef = currGameProcessDataRef.child(REMATCH_PATH);
+        gameOverCodeRef = currGameProcessDataRef.child(GAME_OVER_CODE_PATH);
         //endregion
 
         firstPlayerScore = 0;
@@ -76,6 +79,10 @@ public class GameProcessData {
 
         firstPlayerSkippedTurns = 0;
         secondPlayerSkippedTurns = 0;
+    }
+
+    public Task<Void> eraseGameProcessData(){
+        return currGameProcessDataRef.removeValue();
     }
 
     public Task<Void> writeFirstPlayerScore(int score) {
@@ -87,15 +94,11 @@ public class GameProcessData {
     }
 
     public Task<Void> writeFirstPlayerSkippedTurn() {
-        return firstPlayerScoreRef.setValue(firstPlayerSkippedTurns + 1);
+        return firstPlayerSkippedTurnsRef.setValue(firstPlayerSkippedTurns + 1);
     }
 
     public Task<Void> writeSecondPlayerSkippedTurn() {
-        return secondPlayerScoreRef.setValue(secondPlayerSkippedTurns + 1);
-    }
-
-    public Task<Void> writeFirstPlayerStatusCode(){
-        return secondPlayerScoreRef.setValue(secondPlayerSkippedTurns + 1);
+        return secondPlayerSkippedTurnsRef.setValue(secondPlayerSkippedTurns + 1);
     }
 
     public Task<Void> writeTurn(@NonNull String activePlayerKey) {
@@ -107,6 +110,10 @@ public class GameProcessData {
 
     public Task<Void> writeRematchOffering(@NonNull Rematch rematch) {
         return rematchRef.setValue(rematch);
+    }
+
+    public Task<Void> writeGameOverCode(@NonNull GameOverCode gameOverCode){
+        return gameOverCodeRef.setValue(gameOverCode.getValue());
     }
 
     //region GETTERS AND SETTERS
@@ -140,6 +147,14 @@ public class GameProcessData {
 
     public NewValueSnapshotLiveData<Integer> getSecondPlayerStatusCodeNewValueSnapshotLiveData(){
         return new NewValueSnapshotLiveData<>(secondPlayerStatusCodeRef, Integer.class);
+    }
+
+    public NewValueSnapshotLiveData<Integer> getGameOverCodeNewValueSnapshotLiveData(){
+        return new NewValueSnapshotLiveData<>(gameOverCodeRef, Integer.class);
+    }
+
+    public NewValueSnapshotLiveData<String> getHostPlayerUIDNewValueSnapshotLiveData(){
+        return new NewValueSnapshotLiveData<>(hostPlayerUIDRef, String.class);
     }
 
     public int getFirstPlayerScore() {
@@ -227,8 +242,9 @@ public class GameProcessData {
         PLAYER_TWO_WIN(12),
         DRAW (13),
         PLAYER_ONE_SURRENDER(14),
-        PLAYER_TWO_SURRENDER(15);
-
+        PLAYER_TWO_SURRENDER(15),
+        PLAYER_ONE_SURRENDER_AND_LEAVE(16),
+        PLAYER_TWO_SURRENDER_AND_LEAVE(17);
         private final int value;
 
         GameOverCode(int value) {

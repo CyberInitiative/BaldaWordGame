@@ -11,7 +11,6 @@ import com.google.firebase.database.Exclude;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Objects;
-import java.util.Random;
 
 public class GameRoom {
 
@@ -23,12 +22,14 @@ public class GameRoom {
     public static final String SECOND_PLAYER_UID_PATH = "secondPlayerUID";
     public static final String GAME_ROOM_STATUS_PATH = "gameRoomStatus";
     public static final String DATA_STATE_PATH = "dataState";
+    public static final String HOST_PLAYER_UID_PATH = "hostPlayerUID";
     //endregion
 
     public static final DatabaseReference GAME_ROOMS_REF = FirebaseDatabase.getInstance().getReference().child(GAME_ROOMS);
 
     private String gameRoomKey;
     private String firstPlayerUID, secondPlayerUID;
+    private String hostPlayerUID;
     private String gameRoomStatus;
     private String dataState;
     private int gameBoardSize;
@@ -45,31 +46,7 @@ public class GameRoom {
         this.turnDuration = turnDuration;
         this.dataState = DataStatus.DATA_NOT_PREPARED;
         this.gameRoomStatus = GameRoom.RoomStatus.OPEN_GAME_ROOM;
-    }
-
-//    public Task<Void> tossUpFirstTurn() {
-//        long seed = System.currentTimeMillis();
-//        Random random = new Random(seed);
-//        int randomNumber = random.nextInt(101);
-//
-//        if (randomNumber % 2 == 0) {
-////            turn = new Turn(firstPlayerUID);
-//        } else {
-////            turn = new Turn(secondPlayerUID);
-//        }
-//        Turn turn = new Turn();
-//        return GAME_ROOMS_REF.child(gameRoomKey).child(TURN).setValue(turn);
-//    }
-
-    public String tossUpWhoTurnsFirst() {
-        long seed = System.currentTimeMillis();
-        Random random = new Random(seed);
-        int randomNumber = random.nextInt(101);
-
-        if (randomNumber % 2 == 0) {
-            return firstPlayerUID;
-        }
-        return secondPlayerUID;
+        this.hostPlayerUID = firstPlayerUID;
     }
 
     public static Task<GameRoom> fetchGameRoom(@NonNull String key) {
@@ -84,15 +61,23 @@ public class GameRoom {
                 });
     }
 
+    public Task<Void> eraseGameRoom(){
+        return GAME_ROOMS_REF.child(gameRoomKey).removeValue();
+    }
+
     public Task<Void> writeDataState(@NonNull String gameState) {
         return GAME_ROOMS_REF.child(gameRoomKey).child(DATA_STATE_PATH).setValue(gameState);
     }
 
-    public NewValueSnapshotLiveData<String> getDataStateUniqueSnapshotLiveData() {
+    public NewValueSnapshotLiveData<String> getDataStateNewValueSnapshotLiveData() {
         return new NewValueSnapshotLiveData<>(GAME_ROOMS_REF.child(gameRoomKey).child(DATA_STATE_PATH), String.class);
     }
 
-    //region GETTERS
+    public NewValueSnapshotLiveData<String> getHostPlayerUIDNewValueSnapshotLiveData(){
+        return new NewValueSnapshotLiveData<>(GAME_ROOMS_REF.child(gameRoomKey).child(HOST_PLAYER_UID_PATH), String.class);
+    }
+
+    //region GETTERS_AND_SETTERS
     @Exclude
     public String getGameRoomKey() {
         return gameRoomKey;
@@ -122,12 +107,25 @@ public class GameRoom {
         return dataState;
     }
 
-    public String getOpponentKey() {
+    public void setDataState(String dataState) {
+        this.dataState = dataState;
+    }
+
+    public String getMyOpponentKey() {
         if (User.fetchPlayerUID().equals(firstPlayerUID)) {
             return secondPlayerUID;
         } else
             return firstPlayerUID;
     }
+
+    public String getHostPlayerUID() {
+        return hostPlayerUID;
+    }
+
+    public void setHostPlayerUID(String hostPlayerUID) {
+        this.hostPlayerUID = hostPlayerUID;
+    }
+
     //endregion
 
     @Override

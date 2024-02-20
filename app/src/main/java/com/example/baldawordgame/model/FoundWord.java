@@ -1,37 +1,41 @@
 package com.example.baldawordgame.model;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class FoundWord {
     private String word;
     private String playerKey;
+    private ArrayList<LetterCell> letters = new ArrayList<>();
 
     public static final String INITIAL_WORD_KEY = "INITIAL_WORD_KEY";
 
     public FoundWord() {
     }
 
-    public FoundWord(String word, String playerKey) {
+    public FoundWord(@NonNull String word, @NonNull String playerKey, ArrayList<LetterCell> letters) {
         this.word = word;
         this.playerKey = playerKey;
+        this.letters = letters;
+    }
+
+    public static FoundWord initialWord(@NonNull String word){
+        return new FoundWord(word, INITIAL_WORD_KEY, null);
     }
 
     public String getWord() {
         return word;
     }
 
-    public void setWord(String word) {
-        this.word = word;
-    }
-
     public String getPlayerKey() {
         return playerKey;
     }
 
-    public void setPlayerKey(String playerKey) {
-        this.playerKey = playerKey;
+    public ArrayList<LetterCell> getLetters() {
+        return letters;
     }
 
     @Override

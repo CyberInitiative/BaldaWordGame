@@ -9,7 +9,7 @@
     tools:context=".GameActivity">
 
     <EditText
-        android:id="@+id/input_receiver"
+        android:id="@+id/inputReceiver"
         android:layout_width="0.1dp"
         android:layout_height="0.1dp"
         android:inputType="textPassword"
@@ -17,522 +17,388 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/top_linear_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/white"
-        android:orientation="vertical"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/input_receiver">
-
-
-        <TextView
-            android:id="@+id/activePlayerLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/kelly_slab_regular"
-            android:text="@string/turn_plug_label"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            app:layout_constraintBottom_toTopOf="@+id/textViewTimer"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/textViewTimer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:fontFamily="@font/kelly_slab_regular"
-            android:text="@string/timer_plug_label"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/activePlayerLabel" />
-
-        <TextView
-            android:id="@+id/textView7"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:layout_marginTop="4dp"
-            android:fontFamily="@font/kelly_slab_regular"
-            android:text="@string/player_label"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/textView8"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="10dp"
-            android:fontFamily="@font/kelly_slab_regular"
-            android:text="@string/opponent_label_txt"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/playerScore"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="11dp"
-            android:layout_marginTop="1dp"
-            android:fontFamily="@font/kelly_slab_regular"
-            android:text="очки: 0"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView7" />
-
-        <TextView
-            android:id="@+id/opponentScore"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
-            android:layout_marginRight="11dp"
-            android:fontFamily="@font/kelly_slab_regular"
-            android:text="очки: 0"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView8" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <LinearLayout
-        android:id="@+id/game_board_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:paddingLeft="20dp"
-        android:paddingTop="10dp"
-        android:paddingRight="20dp"
-        android:paddingBottom="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/top_linear_layout">
-
-    </LinearLayout>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewShowPanel"
+    <ProgressBar
+        android:id="@+id/progressBarLoading"
+        style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:gravity="center_horizontal"
-        android:orientation="horizontal"
-        android:paddingLeft="7dp"
-        android:paddingTop="7dp"
-        android:paddingRight="7dp"
-        android:paddingBottom="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/game_board_layout" />
-
-    <LinearLayout
-        android:id="@+id/players_game_statistic"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:baselineAligned="false"
-        android:orientation="horizontal"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_linear_layout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/recyclerViewShowPanel">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="2.5dp"
-            android:layout_weight="1">
-
-            <TextView
-                android:id="@+id/textViewPlayerDictionaryLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="5dp"
-                android:layout_marginBottom="5dp"
-                android:background="@drawable/text_view_drawable"
-                android:fontFamily="@font/kelly_slab_regular"
-                android:gravity="center"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
-                android:text="@string/text_view_game_room_player_label"
-                android:textColor="@color/black"
-                android:textSize="14sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/textViewPlayerDictionaryPlug"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:gravity="center"
-                android:text="@string/text_view_dictionary_plug"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textViewPlayerDictionaryLabel" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewPlayerDictionary"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginTop="5dp"
-                android:overScrollMode="never"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textViewPlayerDictionaryLabel" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginStart="2.5dp"
-            android:layout_weight="1">
-
-            <TextView
-                android:id="@+id/textViewOpponentDictionaryLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:background="@drawable/text_view_drawable"
-                android:fontFamily="@font/kelly_slab_regular"
-                android:gravity="center"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
-                android:text="@string/text_view_game_room_opponent_label"
-                android:textColor="@color/black"
-                android:textSize="14sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewOpponentDictionary"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginTop="5dp"
-                android:overScrollMode="never"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textViewOpponentDictionaryLabel" />
-
-            <TextView
-                android:id="@+id/textViewOpponentDictionaryPlug"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:gravity="center"
-                android:text="@string/text_view_dictionary_plug"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textViewOpponentDictionaryLabel" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/bottom_linear_layout"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp"
+        android:indeterminateTint="@color/black"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewLoading" />
 
-        <android.widget.Button
-            android:id="@+id/buttonSurrender"
-            android:layout_width="65dp"
-            android:layout_height="65dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@drawable/round_button_drawable"
-            android:fontFamily="@font/kelly_slab_regular"
-            android:text="SUR"
-            android:textColor="@color/black"
-            android:textSize="14sp" />
+    <TextView
+        android:id="@+id/textViewLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:fontFamily="@font/kelly_slab_regular"
+        android:text="@string/loading"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@+id/progressBarLoading"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
 
-        <ImageButton
-            android:id="@+id/skipTurnButton"
-            android:layout_width="65dp"
-            android:layout_height="65dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@drawable/round_button_drawable"
-            android:fontFamily="@font/kelly_slab_regular"
-            android:textColor="@color/black"
-            android:src="@drawable/ic_skip_turn"
-            android:textSize="14sp" />
 
-        <ImageButton
-            android:id="@+id/buttonConfirmCombination"
-            android:layout_width="65dp"
-            android:layout_height="65dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@drawable/round_button_drawable"
-            android:src="@drawable/ic_confirm"
-            android:textSize="20sp" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/topLinearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:orientation="vertical"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/inputReceiver">
 
-        <ImageButton
-            android:id="@+id/buttonDictionaryCheck"
-            android:layout_width="65dp"
-            android:layout_height="65dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@drawable/round_button_drawable"
-            android:src="@drawable/ic_simple_dic"
-            android:textSize="20sp" />
 
-    </LinearLayout>
+            <ImageView
+                android:id="@+id/opponentSecondSkippedTurn"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                app:layout_constraintEnd_toStartOf="@+id/opponentFirstSkippedTurn"
+                app:layout_constraintTop_toBottomOf="@+id/opponentScore"
+                app:srcCompat="@drawable/skip_turn_icon_transp" />
+
+            <ImageView
+                android:id="@+id/playerSecondSkippedTurn"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                app:layout_constraintStart_toEndOf="@+id/playerFirstSkippedTurn"
+                app:layout_constraintTop_toBottomOf="@+id/playerScore"
+                app:srcCompat="@drawable/skip_turn_icon_transp" />
+
+            <ImageView
+                android:id="@+id/playerFirstSkippedTurn"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="5dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/playerScore"
+                app:srcCompat="@drawable/skip_turn_icon_transp" />
+
+            <ImageView
+                android:id="@+id/playerThirdSkippedTurn"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                app:layout_constraintStart_toEndOf="@+id/playerSecondSkippedTurn"
+                app:layout_constraintTop_toBottomOf="@+id/playerScore"
+                app:srcCompat="@drawable/skip_turn_icon_transp" />
+
+            <TextView
+                android:id="@+id/activePlayerLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:text="@string/turn_plug_label"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/textViewTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:text="@string/timer_plug_label"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/activePlayerLabel" />
+
+            <TextView
+                android:id="@+id/textView7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="5dp"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:text="@string/player_label"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/textView8"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="10dp"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:text="@string/opponent_label_txt"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/playerScore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="5dp"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:text="очки: 0"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView7" />
+
+            <TextView
+                android:id="@+id/opponentScore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="10dp"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:text="очки: 0"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView8" />
+
+            <ImageView
+                android:id="@+id/opponentFirstSkippedTurn"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="10dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/opponentScore"
+                app:srcCompat="@drawable/skip_turn_icon_transp" />
+
+            <ImageView
+                android:id="@+id/opponentThirdSkippedTurn"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                app:layout_constraintEnd_toStartOf="@+id/opponentSecondSkippedTurn"
+                app:layout_constraintTop_toBottomOf="@+id/opponentScore"
+                app:srcCompat="@drawable/skip_turn_icon_transp" />
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:id="@+id/gameBoardLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingLeft="20dp"
+            android:paddingTop="10dp"
+            android:paddingRight="20dp"
+            android:paddingBottom="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/topLinearLayout">
+
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewShowPanel"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:paddingLeft="7dp"
+            android:paddingTop="7dp"
+            android:paddingRight="7dp"
+            android:paddingBottom="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/gameBoardLayout" />
+
+        <LinearLayout
+            android:id="@+id/playersGameStatistic"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            app:layout_constraintBottom_toTopOf="@+id/bottomLinearLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerViewShowPanel">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="2.5dp"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/textViewPlayerDictionaryLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:background="@drawable/text_view_drawable"
+                    android:fontFamily="@font/kelly_slab_regular"
+                    android:gravity="center"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp"
+                    android:text="@string/text_view_game_room_player_label"
+                    android:textColor="@color/black"
+                    android:textSize="14sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/textViewPlayerDictionaryPlug"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:gravity="center"
+                    android:text="@string/text_view_dictionary_plug"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textViewPlayerDictionaryLabel" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewPlayerDictionary"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="5dp"
+                    android:overScrollMode="never"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textViewPlayerDictionaryLabel"
+                    app:layout_constraintVertical_bias="0.0" />
+
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="2.5dp"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/textViewOpponentDictionaryLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="5dp"
+                    android:background="@drawable/text_view_drawable"
+                    android:fontFamily="@font/kelly_slab_regular"
+                    android:gravity="center"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp"
+                    android:text="@string/text_view_game_room_opponent_label"
+                    android:textColor="@color/black"
+                    android:textSize="14sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewOpponentDictionary"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="5dp"
+                    android:overScrollMode="never"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textViewOpponentDictionaryLabel" />
+
+                <TextView
+                    android:id="@+id/textViewOpponentDictionaryPlug"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:gravity="center"
+                    android:text="@string/text_view_dictionary_plug"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textViewOpponentDictionaryLabel" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/bottomLinearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <ImageButton
+                android:id="@+id/buttonSurrender"
+                android:layout_width="65dp"
+                android:layout_height="65dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/round_button_drawable_enabled"
+                android:contentDescription="@string/surrender_button_content_description"
+                android:src="@drawable/surrender_flag_icon_2" />
+
+            <ImageButton
+                android:id="@+id/skipTurnButton"
+                android:layout_width="65dp"
+                android:layout_height="65dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/round_button_drawable_enabled"
+                android:contentDescription="@string/skip_turn_button_content_description"
+                android:fontFamily="@font/kelly_slab_regular"
+                android:src="@drawable/skip_turn_icon"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <ImageButton
+                android:id="@+id/buttonConfirmCombination"
+                android:layout_width="65dp"
+                android:layout_height="65dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/round_button_drawable_enabled"
+                android:contentDescription="@string/confirm_combination_button_content_description"
+                android:src="@drawable/accept_icon"
+                android:textSize="20sp" />
+
+            <ImageButton
+                android:id="@+id/buttonDictionaryCheck"
+                android:layout_width="65dp"
+                android:layout_height="65dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/round_button_drawable_enabled"
+                android:contentDescription="@string/dictionary_check_button_content_description"
+                android:src="@drawable/ic_simple_dic"
+                android:textSize="20sp" />
+
+        </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <!--<LinearLayout-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:layout_marginLeft="5dp"-->
-    <!--android:layout_marginRight="2.50dp"-->
-    <!--android:layout_weight="1"-->
-    <!--android:gravity="center"-->
-    <!--android:orientation="vertical">-->
-
-
-    <!--<TextView-->
-    <!--    android:id="@+id/textViewPlayerDictionaryPlug"-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="0dp"-->
-    <!--    android:gravity="center"-->
-    <!--    android:text="@string/text_view_dictionary_plug" />-->
-
-    <!--    <androidx.recyclerview.widget.RecyclerView-->
-    <!--        android:id="@+id/recyclerViewPlayerDictionary"-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="0dp" />-->
-
-    <!--    <TextView-->
-    <!--        android:id="@+id/textViewPlayerPoints"-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_marginTop="2.50dp"-->
-    <!--        android:background="@drawable/text_view_drawable"-->
-    <!--        android:fontFamily="@font/kelly_slab_regular"-->
-    <!--        android:gravity="center"-->
-    <!--        android:paddingTop="5dp"-->
-    <!--        android:paddingBottom="5dp"-->
-    <!--        android:shadowColor="@color/black"-->
-    <!--        android:shadowDx="1.2"-->
-    <!--        android:shadowDy="2"-->
-    <!--        android:shadowRadius="0.9"-->
-    <!--        android:text="@string/text_view_game_room_player_points"-->
-    <!--        android:textColor="@color/lion_mane"-->
-    <!--        android:textSize="18sp" />-->
-
-    <!--</LinearLayout>-->
-
-    <!--<LinearLayout-->
-
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:layout_marginLeft="2.50dp"-->
-    <!--android:layout_marginRight="5dp"-->
-    <!--android:layout_weight="1"-->
-    <!--android:gravity="center"-->
-    <!--android:orientation="vertical">-->
-
-    <!--<TextView-->
-    <!--    android:id="@+id/textViewOpponentDictionaryLabel"-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="wrap_content"-->
-    <!--    android:layout_marginBottom="2.50dp"-->
-    <!--    android:background="@drawable/text_view_drawable"-->
-    <!--    android:fontFamily="@font/kelly_slab_regular"-->
-    <!--    android:gravity="center"-->
-    <!--    android:paddingTop="5dp"-->
-    <!--    android:paddingBottom="5dp"-->
-    <!--    android:shadowColor="@color/black"-->
-    <!--    android:shadowDx="1.2"-->
-    <!--    android:shadowDy="2"-->
-    <!--    android:shadowRadius="0.9"-->
-    <!--    android:text="@string/text_view_game_room_opponent_label"-->
-    <!--    android:textColor="@color/lion_mane"-->
-    <!--    android:textSize="17sp" />-->
-
-    <!--<TextView-->
-    <!--    android:id="@+id/textViewOpponentDictionaryPlug"-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="0dp"-->
-    <!--    android:gravity="center"-->
-    <!--    android:text="@string/text_view_dictionary_plug" />-->
-
-    <!--<androidx.recyclerview.widget.RecyclerView-->
-    <!--    android:id="@+id/recyclerViewOpponentDictionary"-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="0dp" />-->
-
-    <!--<TextView-->
-    <!--    android:id="@+id/textViewOpponentPoints"-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="wrap_content"-->
-    <!--    android:layout_marginTop="2.50dp"-->
-    <!--    android:background="@drawable/text_view_drawable"-->
-    <!--    android:fontFamily="@font/kelly_slab_regular"-->
-    <!--    android:gravity="center"-->
-    <!--    android:paddingTop="5dp"-->
-    <!--    android:paddingBottom="5dp"-->
-    <!--    android:shadowColor="@color/black"-->
-    <!--    android:shadowDx="1.2"-->
-    <!--    android:shadowDy="2"-->
-    <!--    android:shadowRadius="0.9"-->
-    <!--    android:text="@string/text_view_game_room_opponent_points"-->
-    <!--    android:textColor="@color/lion_mane"-->
-    <!--    android:textSize="18sp" />-->
-    <!--</LinearLayout>-->
-
-
-    <!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-    <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
-    <!--xmlns:tools="http://schemas.android.com/tools"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:background="@color/scarlet"-->
-    <!--android:orientation="vertical"-->
-    <!--tools:context=".GameActivity">-->
-
-    <!--<EditText-->
-    <!--    android:id="@+id/input_receiver"-->
-    <!--    android:layout_width="0.1dp"-->
-    <!--    android:layout_height="0.1dp"-->
-    <!--    android:inputType="textPassword" />-->
-
-    <!--<LinearLayout-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="wrap_content"-->
-    <!--    android:background="@color/lion_mane"-->
-    <!--    android:orientation="vertical">-->
-    <!--    <TextView-->
-    <!--        android:id="@+id/textView"-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:text="TextView" />-->
-    <!--</LinearLayout>-->
-
-    <!--<LinearLayout-->
-    <!--    android:id="@+id/game_board_layout"-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="wrap_content"-->
-    <!--    android:gravity="center"-->
-    <!--    android:orientation="vertical">-->
-    <!--</LinearLayout>-->
-
-    <!--<LinearLayout-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="wrap_content"-->
-    <!--    android:background="@color/burley_wood"-->
-    <!--    android:orientation="horizontal">-->
-
-    <!--    <LinearLayout-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        android:layout_weight="1"-->
-    <!--        android:orientation="vertical">-->
-    <!--        <androidx.recyclerview.widget.RecyclerView-->
-    <!--            android:layout_width="match_parent"-->
-    <!--            android:layout_height="match_parent" />-->
-    <!--    </LinearLayout>-->
-
-    <!--    <LinearLayout-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        android:layout_weight="1"-->
-    <!--        android:orientation="vertical">-->
-    <!--        <androidx.recyclerview.widget.RecyclerView-->
-    <!--            android:layout_width="match_parent"-->
-    <!--            android:layout_height="match_parent" />-->
-    <!--    </LinearLayout>-->
-    <!--</LinearLayout>-->
-
-    <!--<LinearLayout-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="wrap_content"-->
-    <!--    android:background="@color/lion_mane"-->
-    <!--    android:gravity="center"-->
-    <!--    android:paddingBottom="6dp"-->
-    <!--    android:paddingTop="6dp"-->
-    <!--    android:orientation="horizontal">-->
-
-    <!--    <LinearLayout-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        android:layout_weight="1"-->
-    <!--        android:gravity="center"-->
-    <!--        android:orientation="horizontal">-->
-
-    <!--        <Button-->
-    <!--            android:layout_width="63dp"-->
-    <!--            android:layout_height="65dp"-->
-    <!--            android:text="1" />-->
-    <!--    </LinearLayout>-->
-
-    <!--    <LinearLayout-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        android:layout_weight="1"-->
-    <!--        android:gravity="center"-->
-    <!--        android:orientation="horizontal">-->
-
-    <!--        <android.widget.Button-->
-    <!--            android:layout_width="62dp"-->
-    <!--            android:layout_height="62dp"-->
-    <!--            android:layout_marginLeft="10dp"-->
-    <!--            android:layout_marginRight="10dp"-->
-    <!--            android:background="@drawable/round_button_drawable"-->
-    <!--            android:fontFamily="@font/kelly_slab_regular"-->
-    <!--            android:shadowColor="@color/ripe_wheat"-->
-    <!--            android:shadowDx="1.2"-->
-    <!--            android:shadowDy="2"-->
-    <!--            android:shadowRadius="0.9"-->
-    <!--            android:text="skip"-->
-    <!--            android:textSize="20sp" />-->
-    <!--    </LinearLayout>-->
-
-    <!--    <LinearLayout-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        android:layout_weight="1"-->
-    <!--        android:gravity="center"-->
-    <!--        android:orientation="horizontal">-->
-
-    <!--        <Button-->
-    <!--            android:layout_width="65dp"-->
-    <!--            android:layout_height="65dp"-->
-    <!--            android:text="3" />-->
-    <!--    </LinearLayout>-->
-
-    <!--</LinearLayout>-->
-
-    <!--</LinearLayout>-->

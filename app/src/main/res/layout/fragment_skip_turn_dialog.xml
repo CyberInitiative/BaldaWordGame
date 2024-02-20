@@ -14,7 +14,7 @@
         android:layout_height="60dp"
         android:layout_marginTop="30dp"
         android:gravity="center"
-        android:text="@string/surrender_and_leave"
+        android:text="@string/skip_turn_question"
         android:textColor="@color/black"
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"

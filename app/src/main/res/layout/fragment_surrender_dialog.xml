@@ -8,7 +8,7 @@
     tools:layout_editor_absoluteY="-22dp">
 
     <TextView
-        android:id="@+id/surrenderQuestionTextView"
+        android:id="@+id/gameResultTextView"
         android:fontFamily="@font/kelly_slab_regular"
         android:layout_width="241dp"
         android:layout_height="60dp"
@@ -34,7 +34,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/noAnswerButton"
-        app:layout_constraintTop_toBottomOf="@+id/surrenderQuestionTextView"
+        app:layout_constraintTop_toBottomOf="@+id/gameResultTextView"
         app:layout_constraintVertical_bias="0.0" />
 
     <Button
@@ -49,6 +49,6 @@
         app:layout_constraintEnd_toStartOf="@+id/yesAnswerButton"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/surrenderQuestionTextView"
+        app:layout_constraintTop_toBottomOf="@+id/gameResultTextView"
         app:layout_constraintVertical_bias="0.0" />
 </androidx.constraintlayout.widget.ConstraintLayout>

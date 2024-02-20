@@ -24,7 +24,6 @@ public class GameVocabulary {
     //endregion
 
     public static final DatabaseReference GAME_VOCABULARIES = FirebaseDatabase.getInstance().getReference().child(GAME_VOCABULARIES_PATH);
-
     private final String gameRoomKey;
     private final ObservableArrayList<FoundWord> foundWords = new ObservableArrayList<>();
     private ChildEventListener gameVocabularyListener = new ChildEventListener() {
@@ -65,6 +64,10 @@ public class GameVocabulary {
         this.gameRoomKey = gameRoomKey;
     }
 
+    public Task<Void> eraseGameVocabulary(){
+        return GAME_VOCABULARIES.child(gameRoomKey).removeValue();
+    }
+
     public void setGameVocabularyListener() {
         if (!isGameVocabularyListenerSet) {
             GAME_VOCABULARIES.child(gameRoomKey).child("vocabulary").addChildEventListener(gameVocabularyListener);
@@ -84,8 +87,7 @@ public class GameVocabulary {
     }
 
     @NonNull
-    public Task<Void> addWord(@NonNull String word, @NonNull String playerKey) {
-        FoundWord foundWord = new FoundWord(word, playerKey);
+    public Task<Void> addWord(@NonNull FoundWord foundWord) {
         return GAME_VOCABULARIES.child(gameRoomKey).child(VOCABULARY_PATH).push().setValue(foundWord);
     }
 

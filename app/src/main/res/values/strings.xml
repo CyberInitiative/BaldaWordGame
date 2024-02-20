@@ -1,5 +1,10 @@
 <resources>
     <string name="app_name">BaldaWordGame</string>
+
+    <string name="single_game">Одиночная игра</string>
+    <string name="online_game">Игра онлайн</string>
+    <string name="quit">Выйти</string>
+
     <string name="find_game_btn_text">Найти игру</string>
     <string name="create_game_btn_text">Создать игру</string>
     <string name="log_in_btn_text">Войти</string>
@@ -27,8 +32,8 @@
     <string name="play_button_text">Играть</string>
     <string name="player_label">Игрок</string>
     <string name="turn_plug_label">Чей ход</string>
-    <string name="player_active_label">Ваш ход</string>
-    <string name="opponent_active_label">Ход оппонента</string>
+    <string name="player_active_turn">Ваш ход</string>
+    <string name="opponent_active_turn">Ход оппонента</string>
     <string name="timer_plug_label">Таймер</string>
 
     <string name="text_view_game_room_creation_label">Создание комнаты</string>
@@ -51,9 +56,22 @@
     <string name="surrender_and_leave">Хотите покинуть комнату и признать поражение?</string>
     <string name="yes_text_view">Да</string>
     <string name="no_text_view">Нет</string>
+    <string name="enemy_surrendered_and_left">Противник признал поражение и покинул игру</string>
+    <string name="leave_game">Выйти из комнаты</string>
+    <string name="skip_turn_question">Хотите пропустить ход?</string>
 
     <string name="room_list_status_empty">Список пуст</string>
-    <string name="room_list_status_loading">Загрузка…</string>
+    <string name="loading">Загрузка…</string>
+
+    <string name="dictionary_check_button_content_description">Посмотреть выбранное слово в словаре</string>
+    <string name="confirm_combination_button_content_description">Подтвердить составленную комбинацию букв</string>
+    <string name="skip_turn_button_content_description">Пропустить ход</string>
+    <string name="surrender_button_content_description">Признать поражение</string>
+
+    <string name="player_win">Вы победили!</string>
+    <string name="player_lose">Вы проиграли!</string>
+
+    <string name="start_new_game_question">Начать новую игру?</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

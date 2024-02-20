@@ -73,6 +73,20 @@ public class GameBoard {
         });
     }
 
+    public Task<Void> eraseGameBoard(){
+        return currentGameBoardRef.removeValue();
+    }
+
+    public boolean checkIfThereIsAvailableLetterCell(){
+        for(Map.Entry<DatabaseReference, LetterCell> letterCellEntry : refToLetterCell.entrySet()){
+            LetterCell letterCell = letterCellEntry.getValue();
+            if(letterCell.getState().equals(LetterCell.LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE)){
+                return true;
+            }
+        }
+        return false;
+    }
+
     public ArrayList<LetterCell> getLetterCellsArrayList(){
         ArrayList<LetterCell> letterCells = new ArrayList<>();
         for(Map.Entry<DatabaseReference, LetterCell> letterCellEntry : refToLetterCell.entrySet()){

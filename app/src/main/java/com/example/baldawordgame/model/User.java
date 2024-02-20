@@ -51,9 +51,13 @@ public class User {
         return USERS_REF.child(fetchPlayerUID()).child(JOINED_GAME_ROOM_KEY_PATH).setValue(joinedGameRoomKey);
     }
 
-    public NewValueSnapshotLiveData<Integer> getJoinedGameRoomKeyLiveData(){
-        return new NewValueSnapshotLiveData<>(USERS_REF.child(fetchPlayerUID()).child(JOINED_GAME_ROOM_KEY_PATH), Integer.class);
+    public static Task<Void> eraseJoinedGameRoomKey(){
+        return USERS_REF.child(fetchPlayerUID()).child(JOINED_GAME_ROOM_KEY_PATH).removeValue();
     }
+
+//    public NewValueSnapshotLiveData<Integer> getJoinedGameRoomKeyLiveData(){
+//        return new NewValueSnapshotLiveData<>(USERS_REF.child(fetchPlayerUID()).child(JOINED_GAME_ROOM_KEY_PATH), Integer.class);
+//    }
 
     //region GETTERS AND SETTERS
 

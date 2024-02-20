@@ -10,9 +10,6 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -29,10 +26,16 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.baldawordgame.databinding.ActivityGameBinding;
+import com.example.baldawordgame.fragment.DefaultGameEndDialogFragment;
+import com.example.baldawordgame.fragment.EnemySurrendersAndLeavesDialogFragment;
+import com.example.baldawordgame.fragment.SkipTurnDialogFragment;
 import com.example.baldawordgame.fragment.SurrenderAndLeaveDialogFragment;
 import com.example.baldawordgame.fragment.SurrenderDialogFragment;
 import com.example.baldawordgame.model.FoundWord;
 import com.example.baldawordgame.model.GameBoard;
+import com.example.baldawordgame.model.GameProcessData;
+import com.example.baldawordgame.model.GameRoom;
 import com.example.baldawordgame.model.LetterCell;
 import com.example.baldawordgame.model.User;
 import com.example.baldawordgame.view.LetterCellButton;
@@ -48,24 +51,17 @@ import java.util.regex.Pattern;
 
 public class GameActivity extends AppCompatActivity
         implements SurrenderAndLeaveDialogFragment.SurrenderAndLeaveDialogAnswerListener,
-        SurrenderDialogFragment.SurrenderDialogAnswerListener
-{
+        SurrenderDialogFragment.SurrenderDialogAnswerListener,
+        EnemySurrendersAndLeavesDialogFragment.EnemySurrendersAndLeavesAnswerListener,
+        SkipTurnDialogFragment.SkipTurnDialogAnswerListener,
+        DefaultGameEndDialogFragment.RematchAnswerListener {
 
     private final static String TAG = "GAME_ACTIVITY";
     public final static String CURRENT_GAME_ROOM_KEY = "CURRENT_GAME_ROOM_KEY";
-
-    //region VIEWS
-    private EditText inputReceiver;
-    private RecyclerView recyclerViewPlayerDictionary, recyclerViewOpponentDictionary, recyclerViewShowPanel;
-    private LinearLayout gameBoardLayout;
-    private ImageButton buttonConfirmCombination, skipTurnButton;
-    private Button buttonSurrender;
-    private TextView textViewTimer;
-    private TextView playerScore, opponentScore;
-    private TextView textViewPlayerDictionaryPlug, textViewOpponentDictionaryPlug;
-    private LetterCellButton[][] letterCellButtons;
     private long timerServerTimeOffset = 0;
-    //endregion
+
+    private ActivityGameBinding binding;
+    private LetterCellButton[][] letterCellButtons;
 
     private GameViewModel gameViewModel;
     private DictionaryAdapter playerDictionaryAdapter, opponentDictionaryAdapter;
@@ -85,21 +81,13 @@ public class GameActivity extends AppCompatActivity
 
         @Override
         public void afterTextChanged(Editable editable) {
-//            Log.d(TAG, "input: " + editable.toString());
-//            if (editable.toString().length() > 1) {
-//                String theStr = String.valueOf(editable.toString().charAt(editable.toString().length() - 1));
-//                editable.clear();
-//                editable.append(theStr);
-//                Log.d(TAG, "input: " + editable);
-//                gameViewModel.getGameBoard().getCurrentLetterCell().setLetter(editable.toString());
-//                gameViewModel.getGameBoard().getCurrentLetterCell().notifySubscriberAboutLetterChange();
-//            }
             if (gameViewModel.getGameBoard().getCurrentLetterCell() != null && editable.toString().length() == 1 &&
                     Pattern.matches("[а-яА-Я]+", editable.toString())
             ) {
                 gameViewModel.getGameBoard().writeMementoForLetterCell(gameViewModel.getGameBoard().getCurrentLetterCell());
 
-                gameViewModel.getGameBoard().getCurrentLetterCell().setLetter(inputReceiver.getText().toString().toLowerCase());
+                gameViewModel.getGameBoard().getCurrentLetterCell()
+                        .setLetter(binding.inputReceiver.getText().toString().toLowerCase());
                 gameViewModel.getGameBoard().getCurrentLetterCell().setState(LetterCell.LETTER_CELL_INTENDED_STATE);
 
                 gameViewModel.getGameBoard().getCurrentLetterCell().notifySubscriberAboutStateChange();
@@ -108,42 +96,114 @@ public class GameActivity extends AppCompatActivity
                 gameViewModel.getGameBoard().setIntendedLetter(gameViewModel.getGameBoard().getCurrentLetterCell());
                 gameViewModel.getGameBoard().setCurrentLetterCell(null);
 
-                imm.hideSoftInputFromWindow(inputReceiver.getWindowToken(), 0);
+                imm.hideSoftInputFromWindow(binding.inputReceiver.getWindowToken(), 0);
             } else {
                 editable.clear();
             }
         }
     };
 
+    private void initViewsSetting() {
+        binding.buttonDictionaryCheck.setEnabled(false);
+        binding.buttonConfirmCombination.setEnabled(false);
+        binding.skipTurnButton.setEnabled(false);
+        binding.buttonSurrender.setEnabled(false);
+
+        binding.recyclerViewPlayerDictionary.setLayoutManager(new LinearLayoutManager(this));
+        binding.recyclerViewOpponentDictionary.setLayoutManager(new LinearLayoutManager(this));
+
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        dividerItemDecoration.setDrawable(ContextCompat.getDrawable(this, R.drawable.transparent_divider));
+
+        binding.recyclerViewPlayerDictionary.addItemDecoration(dividerItemDecoration);
+        binding.recyclerViewOpponentDictionary.addItemDecoration(dividerItemDecoration);
+
+        binding.recyclerViewShowPanel.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
+        binding.buttonConfirmCombination.setOnClickListener(click -> {
+            if (!gameViewModel.endTurn(TurnTerminationCode.COMBINATION_SUBMITTED)) {
+                Log.d(TAG, "endTurn: error");
+            }
+//            else if(){
+//
+//            }
+        });
+        binding.buttonSurrender.setOnClickListener(click -> {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            SurrenderDialogFragment surrenderDialogFragment = new SurrenderDialogFragment();
+            surrenderDialogFragment.setCancelable(true);
+            surrenderDialogFragment.show(fragmentManager, SurrenderDialogFragment.TAG);
+        });
+        binding.skipTurnButton.setOnClickListener(click -> {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            SkipTurnDialogFragment skipTurnDialogFragment = new SkipTurnDialogFragment();
+            skipTurnDialogFragment.setCancelable(true);
+            skipTurnDialogFragment.show(fragmentManager, SkipTurnDialogFragment.TAG);
+        });
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        setContentView(R.layout.activity_game);
+        binding = ActivityGameBinding.inflate(getLayoutInflater());
+        View view = binding.getRoot();
+        setContentView(view);
+
         Log.d(TAG, "onCreate() called");
+
         Intent intent = getIntent();
         String gameRoomKey = intent.getStringExtra(GameActivity.CURRENT_GAME_ROOM_KEY);
 
-        viewsSettings();
+        initViewsSetting();
+        setVisibilityForLoadingProgressViews(View.VISIBLE);
+        setVisibilityForGameViews(View.GONE);
 
         gameViewModel = new ViewModelProvider(this, new GameViewModelFactory(gameRoomKey)).get(GameViewModel.class);
+
         gameViewModel.getGameRoomFetchedStatus().observe(GameActivity.this, isGameRoomFetched -> {
             if (isGameRoomFetched) {
-//                Log.d(TAG, "gameRoomIsFetched");
-                setLiveDataObservers();
+                setLiveDataObserversOnGameRoomFetchedTrueStatus();
+            }
+        });
+        gameViewModel.getDataConsumedStatus().observe(GameActivity.this, isDataConsumed -> {
+            if (isDataConsumed) {
+                createGameButtons(gameViewModel.getGameRoom().getGameBoardSize());
+                setLetterCellLiveDataObservers();
+                addTextWatcherToInputReceiver();
+                recyclersViewSetting();
+                setLiveDataObserversOnDataConsumedTrueStatus();
+
+                binding.buttonDictionaryCheck.setEnabled(true);
+                binding.buttonSurrender.setEnabled(true);
+
+                setVisibilityForLoadingProgressViews(View.GONE);
+                setVisibilityForGameViews(View.VISIBLE);
             }
         });
 
-//        Log.d(TAG, "GAME ROOM KEY FROM INTENT: " + gameRoomKey);
-
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+    }
+
+    private void setVisibilityForLoadingProgressViews(int visibilityCode) {
+        binding.textViewLoading.setVisibility(visibilityCode);
+        binding.progressBarLoading.setVisibility(visibilityCode);
+    }
+
+    private void setVisibilityForGameViews(int visibilityCode) {
+        binding.inputReceiver.setVisibility(visibilityCode);
+        binding.topLinearLayout.setVisibility(visibilityCode);
+        binding.gameBoardLayout.setVisibility(visibilityCode);
+        binding.recyclerViewShowPanel.setVisibility(visibilityCode);
+        binding.playersGameStatistic.setVisibility(visibilityCode);
+        binding.bottomLinearLayout.setVisibility(visibilityCode);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         Log.d(TAG, "onStart() called");
-        visibilitySetting();
+        setUIOptions();
         if (gameViewModel != null) {
             if (gameViewModel.getDataConsumedStatus().getValue() != null) {
                 addTextWatcherToInputReceiver();
@@ -193,54 +253,76 @@ public class GameActivity extends AppCompatActivity
         return super.onKeyDown(keyCode, event);
     }
 
-    private void setLiveDataObservers() {
-//        Log.d(TAG, "setStateObservers();");
-
+    private void setLiveDataObserversOnGameRoomFetchedTrueStatus() {
+        gameViewModel.getHostPlayerUIDNewValueSnapshotLiveData().observe(GameActivity.this, hostUID -> {
+            if (!gameViewModel.getGameRoom().getHostPlayerUID().equals(hostUID)) {
+                gameViewModel.getGameRoom().setHostPlayerUID(hostUID);
+                if (gameViewModel.getGameRoom().getDataState().equals(GameRoom.DataStatus.DATA_NOT_PREPARED)) {
+                    gameViewModel.reactToGameStageUpdated(GameRoom.DataStatus.DATA_NOT_PREPARED);
+                }
+            }
+        });
+        gameViewModel.getDataStateNewValueSnapshotLiveData().observe(GameActivity.this, dataState -> {
+            if (!gameViewModel.getGameRoom().getDataState().equals(dataState)) {
+                gameViewModel.getGameRoom().setDataState(dataState);
+            }
+            gameViewModel.reactToGameStageUpdated(dataState);
+        });
         gameViewModel.getTurnTimer().observe(GameActivity.this, new Observer<Long>() {
             @Override
             public void onChanged(Long timeLeft) {
                 long minutes = (timeLeft / 1000) / 60;
                 long seconds = (timeLeft / 1000) % 60;
                 String time = String.format("%s : %s", minutes, seconds);
-                textViewTimer.setText(time);
+                binding.textViewTimer.setText(time);
                 if (timeLeft < 0) {
-                    gameViewModel.endTurn(TurnTerminationCode.TIME_IS_UP);
+                    //новый ход записывает тот игрок, чья очередь сейчас ходить; если этот игрок свернул игру, за него
+                    //новый ход запишет хост;
+                    //не реализовано.
+                    if(gameViewModel.getActivePlayerStatusCode() == GameProcessData.PlayerStatusCode.IN_BACKGROUND.getValue()){
+
+                    }
+
+                    if(gameViewModel.getGameProcessData().getTurn().getActivePlayerKey().equals(User.fetchPlayerUID())) {
+                        gameViewModel.endTurn(TurnTerminationCode.TIME_IS_UP);
+                    }
                 }
             }
         });
-        gameViewModel.getGameStageUniqueSnapshotLiveData().observe(GameActivity.this, gameStage -> {
-            gameViewModel.reactToGameStageUpdated(gameStage);
-        });
+    }
 
-        gameViewModel.getDataConsumedStatus().observe(GameActivity.this, isDataConsumed -> {
-            if (isDataConsumed) {
-//                Log.d(TAG, "isDataConsumed = " + isDataConsumed);
-                createGameButtons(gameViewModel.getGameRoom().getGameBoardSize());
-                setObservers();
-                addTextWatcherToInputReceiver();
-                recyclersViewSetting();
+    private void setLiveDataObserversOnDataConsumedTrueStatus() {
+        gameViewModel.getTurnNewValueSnapshotLiveData().observe(GameActivity.this, turn -> {
+            if (turn != null && gameViewModel.getGameProcessData().getTurn() != turn) {
 
-                gameViewModel.getTurnNewValueSnapshotLiveData().observe(GameActivity.this, turn -> {
-                    if (turn != null && gameViewModel.getGameProcessData().getTurn() != turn) {
-                        gameViewModel.getGameProcessData().setTurn(turn);
-                        gameViewModel.getTurnTimer().startTimer(turn.getTurnStartedAt(), timerServerTimeOffset);
+                if (gameViewModel.getGameBoard().checkIfThereIsAvailableLetterCell()) {
+                    gameViewModel.getGameProcessData().setTurn(turn);
+                    gameViewModel.getTurnTimer().startTimer(turn.getTurnStartedAt(), timerServerTimeOffset);
 
-                        if (!turn.getActivePlayerKey().equals(User.fetchPlayerUID())) {
-                            setLetterCellButtonsEnabled(false);
-                        } else {
-                            setLetterCellButtonsEnabled(true);
-                        }
+                    if (!turn.getActivePlayerKey().equals(User.fetchPlayerUID())) {
+                        binding.activePlayerLabel.setText(R.string.opponent_active_turn);
+                        setLetterCellButtonsEnabled(false);
+                        binding.skipTurnButton.setEnabled(false);
+                        binding.buttonConfirmCombination.setEnabled(false);
+                    } else {
+                        binding.activePlayerLabel.setText(R.string.player_active_turn);
+                        setLetterCellButtonsEnabled(true);
+                        binding.skipTurnButton.setEnabled(true);
+                        binding.buttonConfirmCombination.setEnabled(true);
                     }
-                });
+                } else {
+                    //count points and send endcode;
+                }
+
             }
         });
         gameViewModel.getFirstPlayerScoreNewValueSnapshotLiveData().observe(GameActivity.this, value -> {
             if (value != null) {
                 gameViewModel.getGameProcessData().setFirstPlayerScore(value);
                 if (gameViewModel.getGameRoom().getFirstPlayerUID().equals(User.fetchPlayerUID())) {
-                    playerScore.setText(String.valueOf(gameViewModel.getGameProcessData().getFirstPlayerScore()));
+                    binding.playerScore.setText(String.valueOf(gameViewModel.getGameProcessData().getFirstPlayerScore()));
                 } else {
-                    opponentScore.setText(String.valueOf(gameViewModel.getGameProcessData().getFirstPlayerScore()));
+                    binding.opponentScore.setText(String.valueOf(gameViewModel.getGameProcessData().getFirstPlayerScore()));
                 }
             }
         });
@@ -248,35 +330,166 @@ public class GameActivity extends AppCompatActivity
             if (value != null) {
                 gameViewModel.getGameProcessData().setSecondPlayerScore(value);
                 if (gameViewModel.getGameRoom().getSecondPlayerUID().equals(User.fetchPlayerUID())) {
-                    playerScore.setText(String.valueOf(gameViewModel.getGameProcessData().getSecondPlayerScore()));
+                    binding.playerScore.setText(String.valueOf(gameViewModel.getGameProcessData().getSecondPlayerScore()));
                 } else {
-                    opponentScore.setText(String.valueOf(gameViewModel.getGameProcessData().getSecondPlayerScore()));
+                    binding.opponentScore.setText(String.valueOf(gameViewModel.getGameProcessData().getSecondPlayerScore()));
                 }
             }
         });
         gameViewModel.getFirstPlayerSkippedTurnsNewValueSnapshotLiveData().observe(GameActivity.this, value -> {
             if (value != null) {
                 gameViewModel.getGameProcessData().setFirstPlayerSkippedTurns(value);
-                if (value == 3) {
-                    //first player lose
+                switch (value) {
+                    case 0:
+                        break;
+                    case 1:
+                        if (gameViewModel.getGameRoom().getFirstPlayerUID().equals(User.fetchPlayerUID())) {
+                            binding.playerFirstSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        } else {
+                            binding.opponentFirstSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        }
+                        break;
+                    case 2:
+                        if (gameViewModel.getGameRoom().getFirstPlayerUID().equals(User.fetchPlayerUID())) {
+                            binding.playerFirstSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                            binding.playerSecondSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        } else {
+                            binding.opponentFirstSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                            binding.opponentSecondSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        }
+                        break;
+                    case 3:
+                        if (gameViewModel.getGameRoom().getFirstPlayerUID().equals(User.fetchPlayerUID())) {
+                            binding.playerFirstSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                            binding.playerSecondSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                            binding.playerThirdSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        } else {
+                            binding.opponentFirstSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                            binding.opponentSecondSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                            binding.opponentThirdSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        }
+                        break;
+                    default:
+                        gameViewModel.getGameProcessData().writeGameOverCode(GameProcessData.GameOverCode.PLAYER_TWO_WIN);
+                        //send end code;
+                        break;
                 }
             }
         });
-        gameViewModel.getSecondPlayerScoreNewValueSnapshotLiveData().observe(GameActivity.this, value -> {
+        gameViewModel.getSecondPlayerSkippedTurnsNewValueSnapshotLiveData().observe(GameActivity.this, value -> {
             if (value != null) {
                 gameViewModel.getGameProcessData().setSecondPlayerSkippedTurns(value);
-                if (value == 3) {
-                    //second player lose
+                switch (value) {
+                    case 0:
+                        break;
+                    case 1:
+                        if (gameViewModel.getGameRoom().getSecondPlayerUID().equals(User.fetchPlayerUID())) {
+                            binding.playerFirstSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        } else {
+                            binding.opponentFirstSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        }
+                        break;
+                    case 2:
+                        if (gameViewModel.getGameRoom().getSecondPlayerUID().equals(User.fetchPlayerUID())) {
+                            binding.playerSecondSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        } else {
+                            binding.opponentSecondSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        }
+                        break;
+                    case 3:
+                        if (gameViewModel.getGameRoom().getSecondPlayerUID().equals(User.fetchPlayerUID())) {
+                            binding.playerThirdSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        } else {
+                            binding.opponentThirdSkippedTurn.setImageResource(R.drawable.skip_turn_icon);
+                        }
+                        break;
+                    default:
+                        gameViewModel.getGameProcessData().writeGameOverCode(GameProcessData.GameOverCode.PLAYER_ONE_WIN);
+                        //send end code;
+                        break;
                 }
             }
         });
-
+        gameViewModel.getGameOverCodeNewValueSnapshotLiveData().observe(GameActivity.this, value -> {
+            if (value != null) {
+                gameViewModel.getTurnTimer().stopTimer();
+                if (value == GameProcessData.GameOverCode.PLAYER_TWO_SURRENDER_AND_LEAVE.getValue()) {
+                    if (gameViewModel.getGameRoom().getFirstPlayerUID().equals(User.fetchPlayerUID())) {
+//                                gameViewModel.getTurnTimer().stopTimer();
+                        EnemySurrendersAndLeavesDialogFragment enemySurrendersAndLeavesDialogFragment
+                                = new EnemySurrendersAndLeavesDialogFragment();
+                        enemySurrendersAndLeavesDialogFragment.setCancelable(false);
+                        enemySurrendersAndLeavesDialogFragment.show(getSupportFragmentManager(), SurrenderDialogFragment.TAG);
+                    }
+                } else if (value == GameProcessData.GameOverCode.PLAYER_ONE_SURRENDER_AND_LEAVE.getValue()) {
+                    if (gameViewModel.getGameRoom().getSecondPlayerUID().equals(User.fetchPlayerUID())) {
+//                                gameViewModel.getTurnTimer().stopTimer();
+                        EnemySurrendersAndLeavesDialogFragment enemySurrendersAndLeavesDialogFragment
+                                = new EnemySurrendersAndLeavesDialogFragment();
+                        enemySurrendersAndLeavesDialogFragment.setCancelable(false);
+                        enemySurrendersAndLeavesDialogFragment.show(getSupportFragmentManager(), SurrenderDialogFragment.TAG);
+                    }
+                } else if (value == GameProcessData.GameOverCode.PLAYER_ONE_WIN.getValue()) {
+                    Bundle bundle = new Bundle();
+                    DefaultGameEndDialogFragment defaultGameEndDialogFragment = new DefaultGameEndDialogFragment();
+                    if (gameViewModel.getGameRoom().getFirstPlayerUID().equals(User.fetchPlayerUID())) {
+                        bundle.putInt(DefaultGameEndDialogFragment.GAME_RESULT_KEY, DefaultGameEndDialogFragment.PLAYER_WIN_CODE);
+                    } else if (gameViewModel.getGameRoom().getSecondPlayerUID().equals(User.fetchPlayerUID())) {
+                        bundle.putInt(DefaultGameEndDialogFragment.GAME_RESULT_KEY, DefaultGameEndDialogFragment.PLAYER_LOSE_CODE);
+                    }
+                    defaultGameEndDialogFragment.setArguments(bundle);
+                    defaultGameEndDialogFragment.setCancelable(false);
+                    defaultGameEndDialogFragment
+                            .show(getSupportFragmentManager(), DefaultGameEndDialogFragment.TAG);
+                } else if (value == GameProcessData.GameOverCode.PLAYER_TWO_WIN.getValue()) {
+                    Bundle bundle = new Bundle();
+                    DefaultGameEndDialogFragment defaultGameEndDialogFragment = new DefaultGameEndDialogFragment();
+                    if (gameViewModel.getGameRoom().getFirstPlayerUID().equals(User.fetchPlayerUID())) {
+                        bundle.putInt(DefaultGameEndDialogFragment.GAME_RESULT_KEY, DefaultGameEndDialogFragment.PLAYER_LOSE_CODE);
+                    } else if (gameViewModel.getGameRoom().getSecondPlayerUID().equals(User.fetchPlayerUID())) {
+                        bundle.putInt(DefaultGameEndDialogFragment.GAME_RESULT_KEY, DefaultGameEndDialogFragment.PLAYER_WIN_CODE);
+                    }
+                    defaultGameEndDialogFragment.setArguments(bundle);
+                    defaultGameEndDialogFragment.setCancelable(false);
+                    defaultGameEndDialogFragment
+                            .show(getSupportFragmentManager(), DefaultGameEndDialogFragment.TAG);
+                }
+            }
+        });
         gameViewModel.getServerOffsetNewValueSnapshotLiveData().observe(GameActivity.this, timeOffset -> {
             timerServerTimeOffset = timeOffset;
         });
     }
 
-    private void visibilitySetting() {
+    private void setLetterCellLiveDataObservers() {
+//        Log.d(TAG, "setObservers() INVOKED");
+        for (int i = 0; i < gameViewModel.getArrayListOfLetterCellLiveData().size(); i++) {
+            gameViewModel.getArrayListOfLetterCellLiveData().get(i).observe(GameActivity.this, updatedCell -> {
+
+                if (updatedCell != null) {
+
+                    int row = updatedCell.getRowIndex();
+                    int column = updatedCell.getColumnIndex();
+
+                    LetterCell letterCellFromViewModel = gameViewModel.getGameBoard().getLetterCellByRowAndColumn(row, column);
+
+                    if (letterCellFromViewModel != null) {
+                        if (!gameViewModel.getGameBoard()
+                                .checkIfLetterIsPartOfCombination(letterCellFromViewModel.getRowIndex(), letterCellFromViewModel.getColumnIndex())) {
+                            gameViewModel.getGameBoard().writeMementoForLetterCell(letterCellFromViewModel);
+
+//                            Log.d(TAG, "setObservers(); onChanged(); LetterCell updatedCell: " + updatedCell);
+                            letterCellFromViewModel.setStateAndNotifySubscriber(updatedCell.getState());
+                            letterCellFromViewModel.setLetterAndNotifySubscriber(updatedCell.getLetter());
+                        }
+
+                    }
+                }
+            });
+        }
+    }
+
+    private void setUIOptions() {
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
                 View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
@@ -315,7 +528,7 @@ public class GameActivity extends AppCompatActivity
                         playerFoundWords.add(word);
 //                        Log.d(TAG, "playerFoundWords.add(word); word: " + word);
                         playerDictionaryAdapter.notifyItemInserted(playerFoundWords.size() - 1);
-                    } else if (word.getPlayerKey().equals(gameViewModel.getGameRoom().getOpponentKey())) {
+                    } else if (word.getPlayerKey().equals(gameViewModel.getGameRoom().getMyOpponentKey())) {
                         opponentFoundWords.add(word);
 //                        Log.d(TAG, "opponentFoundWords.add(word); word: " + word);
                         opponentDictionaryAdapter.notifyItemInserted(opponentFoundWords.size() - 1);
@@ -341,10 +554,10 @@ public class GameActivity extends AppCompatActivity
             }
         });
 
-        recyclerViewPlayerDictionary.setAdapter(playerDictionaryAdapter);
-        recyclerViewOpponentDictionary.setAdapter(opponentDictionaryAdapter);
-        registerAdapterDataObserver(recyclerViewPlayerDictionary, textViewPlayerDictionaryPlug);
-        registerAdapterDataObserver(recyclerViewOpponentDictionary, textViewOpponentDictionaryPlug);
+        binding.recyclerViewPlayerDictionary.setAdapter(playerDictionaryAdapter);
+        binding.recyclerViewOpponentDictionary.setAdapter(opponentDictionaryAdapter);
+        registerAdapterDataObserver(binding.recyclerViewPlayerDictionary, binding.textViewPlayerDictionaryPlug);
+        registerAdapterDataObserver(binding.recyclerViewOpponentDictionary, binding.textViewOpponentDictionaryPlug);
 
         showPanelAdapter = new ShowPanelAdapter(gameViewModel.getGameBoard().getLettersCombination());
         gameViewModel.getGameBoard().getLettersCombination().addOnListChangedCallback(new ObservableList.OnListChangedCallback() {
@@ -373,7 +586,7 @@ public class GameActivity extends AppCompatActivity
                 showPanelAdapter.notifyItemRangeRemoved(positionStart, itemCount);
             }
         });
-        recyclerViewShowPanel.setAdapter(showPanelAdapter);
+        binding.recyclerViewShowPanel.setAdapter(showPanelAdapter);
     }
 
     private void registerAdapterDataObserver(@NonNull RecyclerView recyclerView, @NonNull TextView textView) {
@@ -397,76 +610,11 @@ public class GameActivity extends AppCompatActivity
     }
 
     private void addTextWatcherToInputReceiver() {
-        inputReceiver.addTextChangedListener(inputReceiverTextWatcher);
+        binding.inputReceiver.addTextChangedListener(inputReceiverTextWatcher);
     }
 
     private void removeTextWatcherFromInputReceiver() {
-        inputReceiver.removeTextChangedListener(inputReceiverTextWatcher);
-    }
-
-    private void setObservers() {
-//        Log.d(TAG, "setObservers() INVOKED");
-        for (int i = 0; i < gameViewModel.getArrayListOfLetterCellLiveData().size(); i++) {
-            gameViewModel.getArrayListOfLetterCellLiveData().get(i).observe(GameActivity.this, updatedCell -> {
-
-                if (updatedCell != null) {
-
-                    int row = updatedCell.getRowIndex();
-                    int column = updatedCell.getColumnIndex();
-
-                    LetterCell letterCellFromViewModel = gameViewModel.getGameBoard().getLetterCellByRowAndColumn(row, column);
-
-                    if (letterCellFromViewModel != null) {
-                        if (!gameViewModel.getGameBoard()
-                                .checkIfLetterIsPartOfCombination(letterCellFromViewModel.getRowIndex(), letterCellFromViewModel.getColumnIndex())) {
-                            gameViewModel.getGameBoard().writeMementoForLetterCell(letterCellFromViewModel);
-
-//                            Log.d(TAG, "setObservers(); onChanged(); LetterCell updatedCell: " + updatedCell);
-                            letterCellFromViewModel.setStateAndNotifySubscriber(updatedCell.getState());
-                            letterCellFromViewModel.setLetterAndNotifySubscriber(updatedCell.getLetter());
-                        }
-
-                    }
-                }
-            });
-        }
-    }
-
-    private void viewsSettings() {
-        inputReceiver = findViewById(R.id.input_receiver);
-        gameBoardLayout = findViewById(R.id.game_board_layout);
-        buttonConfirmCombination = findViewById(R.id.buttonConfirmCombination);
-        skipTurnButton = findViewById(R.id.skipTurnButton);
-        buttonSurrender = findViewById(R.id.buttonSurrender);
-        textViewTimer = findViewById(R.id.textViewTimer);
-        playerScore = findViewById(R.id.playerScore);
-        opponentScore = findViewById(R.id.opponentScore);
-        textViewPlayerDictionaryPlug = findViewById(R.id.textViewPlayerDictionaryPlug);
-        textViewOpponentDictionaryPlug = findViewById(R.id.textViewOpponentDictionaryPlug);
-        recyclerViewPlayerDictionary = findViewById(R.id.recyclerViewPlayerDictionary);
-        recyclerViewOpponentDictionary = findViewById(R.id.recyclerViewOpponentDictionary);
-        recyclerViewPlayerDictionary.setLayoutManager(new LinearLayoutManager(this));
-        recyclerViewOpponentDictionary.setLayoutManager(new LinearLayoutManager(this));
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-        dividerItemDecoration.setDrawable(ContextCompat.getDrawable(this, R.drawable.transparent_divider));
-        recyclerViewPlayerDictionary.addItemDecoration(dividerItemDecoration);
-        recyclerViewOpponentDictionary.addItemDecoration(dividerItemDecoration);
-
-        recyclerViewShowPanel = findViewById(R.id.recyclerViewShowPanel);
-        recyclerViewShowPanel.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-
-        buttonConfirmCombination.setOnClickListener(click -> {
-            if (!gameViewModel.endTurn(TurnTerminationCode.COMBINATION_SUBMITTED)) {
-                Log.d(TAG, "endTurn: error");
-            }
-//            else if(){
-//
-//            }
-        });
-        buttonSurrender.setOnClickListener(click -> {
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            new SurrenderDialogFragment().show(fragmentManager, SurrenderDialogFragment.TAG);
-        });
+        binding.inputReceiver.removeTextChangedListener(inputReceiverTextWatcher);
     }
 
     private void createGameButtons(int gameGridSize) {
@@ -481,7 +629,7 @@ public class GameActivity extends AppCompatActivity
             );
             rowLinearLayout.setOrientation(LinearLayout.HORIZONTAL);
             rowLinearLayout.setLayoutParams(rowParams);
-            gameBoardLayout.addView(rowLinearLayout);
+            binding.gameBoardLayout.addView(rowLinearLayout);
 
             for (int j = 0; j < gameGridSize; j++) { //columns
 
@@ -533,31 +681,36 @@ public class GameActivity extends AppCompatActivity
     private void clickHandling(@NonNull LetterCell letterCell) {
         ObservableArrayList<LetterCell> combination = gameViewModel.getGameBoard().getLettersCombination();
 
-        if (letterCell.getState().equals(LetterCell.LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE)) {
-            if (gameViewModel.getGameBoard().getIntendedLetter() == null) {
-                inputReceiver.requestFocus();
-                inputReceiver.setText(null);
-                imm.showSoftInput(inputReceiver, InputMethodManager.SHOW_IMPLICIT);
-                gameViewModel.getGameBoard().setCurrentLetterCell(letterCell);
-            }
-        } else if (letterCell.getState().equals(LetterCell.LETTER_CELL_WITH_LETTER_STATE)) {
-            if (gameViewModel.getGameBoard().getIntendedLetter() != null) {
+        switch (letterCell.getState()) {
+            case LetterCell.LETTER_CELL_AVAILABLE_WITHOUT_LETTER_STATE:
+                if (gameViewModel.getGameBoard().getIntendedLetter() == null) {
+                    binding.inputReceiver.requestFocus();
+                    binding.inputReceiver.setText(null);
+                    imm.showSoftInput(binding.inputReceiver, InputMethodManager.SHOW_IMPLICIT);
+                    gameViewModel.getGameBoard().setCurrentLetterCell(letterCell);
+                }
+                break;
+            case LetterCell.LETTER_CELL_WITH_LETTER_STATE:
+                if (gameViewModel.getGameBoard().getIntendedLetter() != null) {
+                    if (!combination.isEmpty() &&
+                            GameBoard.checkIfOneLetterIsCloseToAnother(combination.get(combination.size() - 1), letterCell)) {
+                        gameViewModel.getGameBoard().setLetterCellAsPartOfCombination(letterCell);
+                    } else if (combination.isEmpty()) {
+                        gameViewModel.getGameBoard().setLetterCellAsPartOfCombination(letterCell);
+                    }
+                }
+                break;
+            case LetterCell.LETTER_CELL_INTENDED_STATE:
                 if (!combination.isEmpty() &&
                         GameBoard.checkIfOneLetterIsCloseToAnother(combination.get(combination.size() - 1), letterCell)) {
-                    gameViewModel.getGameBoard().setLetterCellAsPartOfCombination(letterCell);
+                    gameViewModel.getGameBoard().setIntendedLetterCellAsPartOfCombination(letterCell);
                 } else if (combination.isEmpty()) {
-                    gameViewModel.getGameBoard().setLetterCellAsPartOfCombination(letterCell);
+                    gameViewModel.getGameBoard().setIntendedLetterCellAsPartOfCombination(letterCell);
                 }
-            }
-        } else if (letterCell.getState().equals(LetterCell.LETTER_CELL_INTENDED_STATE)) {
-            if (!combination.isEmpty() &&
-                    GameBoard.checkIfOneLetterIsCloseToAnother(combination.get(combination.size() - 1), letterCell)) {
-                gameViewModel.getGameBoard().setIntendedLetterCellAsPartOfCombination(letterCell);
-            } else if (combination.isEmpty()) {
-                gameViewModel.getGameBoard().setIntendedLetterCellAsPartOfCombination(letterCell);
-            }
-        } else if (letterCell.getState().equals(LetterCell.LETTER_CELL_UNAVAILABLE_WITHOUT_LETTER_STATE)) {
-            //ignore
+                break;
+            case LetterCell.LETTER_CELL_UNAVAILABLE_WITHOUT_LETTER_STATE:
+                //ignore
+                break;
         }
     }
 
@@ -572,7 +725,8 @@ public class GameActivity extends AppCompatActivity
     @Override
     public void onSurrenderAndLeaveYesAnswer(DialogFragment dialog) {
         Log.d(TAG, "onSurrenderAndLeaveYesAnswer");
-
+        gameViewModel.surrenderAndLeave();
+        User.eraseJoinedGameRoomKey();
         finish();
     }
 
@@ -589,5 +743,33 @@ public class GameActivity extends AppCompatActivity
     @Override
     public void onSurrenderNoAnswer(DialogFragment dialog) {
         Log.d(TAG, "dialog NO answer received");
+    }
+
+    @Override
+    public void onEnemySurrendersAndLeavesYesAnswer(DialogFragment dialog) {
+        gameViewModel.eraseGameRoom();
+        finish();
+    }
+
+    @Override
+    public void onSkipTurnYesAnswer(DialogFragment dialog) {
+        gameViewModel.endTurn(TurnTerminationCode.TURN_SKIPPED);
+    }
+
+    @Override
+    public void onSkipTurnNoAnswer(DialogFragment dialog) {
+        Log.d(TAG, "skipTurnDialog NO answer received");
+    }
+
+    @Override
+    public void onRematchYesAnswer(DialogFragment dialog) {
+        //WRITE REMATCH ANSWER TO FIREBASE
+    }
+
+    @Override
+    public void onRematchNoAnswer(DialogFragment dialog) {
+        //WRITE REMATCH ANSWER TO FIREBASE
+        User.eraseJoinedGameRoomKey();
+        finish();
     }
 }

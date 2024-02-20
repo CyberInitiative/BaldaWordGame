@@ -4,7 +4,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.arch.core.util.Function;
-import androidx.databinding.ObservableArrayList;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -13,7 +12,6 @@ import com.example.baldawordgame.model.Dictionary;
 import com.example.baldawordgame.model.FoundWord;
 import com.example.baldawordgame.model.GameVocabulary;
 import com.example.baldawordgame.model.GameProcessData;
-import com.example.baldawordgame.model.LetterCell;
 import com.example.baldawordgame.livedata.LetterCellLiveData;
 import com.example.baldawordgame.TurnTerminationCode;
 import com.example.baldawordgame.livedata.NewValueSnapshotLiveData;
@@ -29,6 +27,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class GameViewModel extends ViewModel {
     private static final String TAG = "GameViewModel";
@@ -41,6 +40,8 @@ public class GameViewModel extends ViewModel {
     private NewValueSnapshotLiveData<Integer> firstPlayerStatusCodeNewValueSnapshotLiveData, secondPlayerStatusCodeNewValueSnapshotLiveData;
     private NewValueSnapshotLiveData<String> dataStateNewValueSnapshotLiveData;
     private NewValueSnapshotLiveData<Turn> turnNewValueSnapshotLiveData;
+    private NewValueSnapshotLiveData<Integer> gameOverCodeNewValueSnapshotLiveData;
+    private NewValueSnapshotLiveData<String> hostPlayerUIDNewValueSnapshotLiveData;
 
     private NewValueSnapshotLiveData<Long> serverOffsetNewValueSnapshotLiveData =
             new NewValueSnapshotLiveData<>(FirebaseDatabase.getInstance().getReference(".info/serverTimeOffset"), Long.class);
@@ -63,7 +64,9 @@ public class GameViewModel extends ViewModel {
 
             timerLiveData = new TimerLiveData(gameRoom.getTurnDuration());
 
-            this.dataStateNewValueSnapshotLiveData = gameRoom.getDataStateUniqueSnapshotLiveData();
+            this.dataStateNewValueSnapshotLiveData = gameRoom.getDataStateNewValueSnapshotLiveData();
+            this.hostPlayerUIDNewValueSnapshotLiveData = gameRoom.getHostPlayerUIDNewValueSnapshotLiveData();
+
             this.turnNewValueSnapshotLiveData = gameProcessData.getTurnUniqueNewValueSnapshotLiveData();
 
             this.firstPlayerScoreNewValueSnapshotLiveData = gameProcessData.getFirstPlayerScoreNewValueSnapshotLiveData();
@@ -72,8 +75,7 @@ public class GameViewModel extends ViewModel {
             this.firstPlayerSkippedTurnsNewValueSnapshotLiveData = gameProcessData.getFirstPlayerSkippedTurnsNewValueSnapshotLiveData();
             this.secondPlayerSkippedTurnsNewValueSnapshotLiveData = gameProcessData.getSecondPlayerSkippedTurnsNewValueSnapshotLiveData();
 
-//            this.firstPlayerStatusCodeNewValueSnapshotLiveData = gameProcessData.getFirstPlayerStatusCodeNewValueSnapshotLiveData();
-//            this.secondPlayerStatusCodeNewValueSnapshotLiveData = gameProcessData.getSecondPlayerStatusCodeNewValueSnapshotLiveData();
+            this.gameOverCodeNewValueSnapshotLiveData = gameProcessData.getGameOverCodeNewValueSnapshotLiveData();
 
             gameRoomFetchedStatus.setValue(true);
         });
@@ -81,9 +83,9 @@ public class GameViewModel extends ViewModel {
 
     public void reactToGameStageUpdated(String gameStage) {
         if (gameStage != null) {
-            if (User.fetchPlayerUID().equals(gameRoom.getFirstPlayerUID())) {
+            if (User.fetchPlayerUID().equals(gameRoom.getHostPlayerUID())) {
                 hostReaction(gameStage);
-            } else if (User.fetchPlayerUID().equals(gameRoom.getSecondPlayerUID())) {
+            } else {
                 guestReaction(gameStage);
             }
         }
@@ -94,7 +96,9 @@ public class GameViewModel extends ViewModel {
             case GameRoom.DataStatus.DATA_NOT_PREPARED:
                 String randomWord = Dictionary.getRandomWordOfACertainLength(gameRoom.getGameBoardSize());
 
-                Task<Void> initialWordWritingTask = gameVocabulary.addWord(randomWord, FoundWord.INITIAL_WORD_KEY);
+                FoundWord initialWord = FoundWord.initialWord(randomWord);
+
+                Task<Void> initialWordWritingTask = gameVocabulary.addWord(initialWord);
                 Task<Void> gameBoardCreationTask = gameBoard.createGameBoard(randomWord);
 
                 Tasks.whenAll(initialWordWritingTask, gameBoardCreationTask /*,tossingUpTask*/).addOnCompleteListener(task -> {
@@ -108,8 +112,7 @@ public class GameViewModel extends ViewModel {
                             .continueWith(task -> arrayListOfLetterCellLiveData = gameBoard.getLetterCellLiveDataArrayList())
                             .addOnCompleteListener(task -> {
                                 dataConsumedStatus.setValue(true);
-                                String UID = gameRoom.tossUpWhoTurnsFirst();
-                                gameProcessData.writeTurn(UID);
+                                gameProcessData.writeTurn(tossUpWhoTurnsFirst());
                             });
                 }
                 break;
@@ -132,16 +135,36 @@ public class GameViewModel extends ViewModel {
         }
     }
 
+    private String tossUpWhoTurnsFirst() {
+        long seed = System.currentTimeMillis();
+        Random random = new Random(seed);
+        int randomNumber = random.nextInt(101);
+
+        if (randomNumber % 2 == 0) {
+            return gameRoom.getFirstPlayerUID();
+        }
+        return gameRoom.getSecondPlayerUID();
+    }
+
     public Task<Void> writeScore(int score) {
         if (gameRoom.getFirstPlayerUID().equals(User.fetchPlayerUID())) {
             return gameProcessData.writeFirstPlayerScore(score);
         } else if (gameRoom.getSecondPlayerUID().equals(User.fetchPlayerUID())) {
             return gameProcessData.writeSecondPlayerScore(score);
         }
-       return null;
+        return null;
     }
 
-    public Task<Void> writeRematchData(){
+    public Task<Void> surrenderAndLeave() {
+        if (gameRoom.getFirstPlayerUID().equals(User.fetchPlayerUID())) {
+            return gameProcessData.writeGameOverCode(GameProcessData.GameOverCode.PLAYER_ONE_SURRENDER_AND_LEAVE);
+        } else if (gameRoom.getSecondPlayerUID().equals(User.fetchPlayerUID())) {
+            return gameProcessData.writeGameOverCode(GameProcessData.GameOverCode.PLAYER_TWO_SURRENDER_AND_LEAVE);
+        }
+        return null;
+    }
+
+    public Task<Void> writeRematchData() {
         if (gameRoom.getFirstPlayerUID().equals(User.fetchPlayerUID())) {
             return gameProcessData.writeRematchOffering(Rematch.firstPlayerOfferedRematch());
         } else if (gameRoom.getSecondPlayerUID().equals(User.fetchPlayerUID())) {
@@ -150,35 +173,66 @@ public class GameViewModel extends ViewModel {
         return null;
     }
 
-    private boolean confirmCombination() {
+    private ArrayList<Task<Void>> confirmCombination() {
         if (gameBoard.checkCombinationConditions()) {
             String word = gameBoard.makeUpWordFromCombination();
             if (gameVocabulary.checkWord(word).equals(GameVocabulary.WordCheckResult.NEW_WORD_FOUNDED)) {
-                gameVocabulary.addWord(word, User.fetchPlayerUID())
-                        .continueWithTask(task -> gameBoard.writeLetterCell())
-                        .continueWithTask(task -> writeScore(word.length()));
+                ArrayList<Task<Void>> tasks = new ArrayList<>();
+
+                FoundWord foundWord = new FoundWord(word, User.fetchPlayerUID(), gameBoard.getLettersCombination());
+
+                Task<Void> addWordTask = gameVocabulary.addWord(foundWord);
+                Task<Void> writeLetterCellTask = gameBoard.writeLetterCell();
+                Task<Void> writeScoreTask = writeScore(word.length());
+
+                tasks.add(addWordTask);
+                tasks.add(writeLetterCellTask);
+                tasks.add(writeScoreTask);
+
+//                Tasks.whenAll()
+//                gameVocabulary.addWord(word, User.fetchPlayerUID())
+//                        .continueWithTask(task -> gameBoard.writeLetterCell())
+//                        .continueWithTask(task -> writeScore(word.length()));
 //                        .continueWithTask(task -> gameProcessData.writeActivePlayerKey(gameRoom.getOpponentKey()));
-                return true;
+                return tasks;
             }
         }
-        return false;
+        return null;
+    }
+
+    public String whoIsNext() {
+        if (gameProcessData.getTurn().getActivePlayerKey().equals(gameRoom.getFirstPlayerUID())) {
+            return gameRoom.getSecondPlayerUID();
+        } else {
+            return gameRoom.getFirstPlayerUID();
+        }
+    }
+
+    public int getActivePlayerStatusCode(){
+        if(gameProcessData.getTurn().getActivePlayerKey().equals(gameRoom.getFirstPlayerUID())){
+            return gameProcessData.getFirstPlayerStatusCode();
+        } else {
+            return gameProcessData.getSecondPlayerStatusCode();
+        }
     }
 
     public boolean endTurn(TurnTerminationCode turnTerminationCode) {
         switch (turnTerminationCode) {
             case TIME_IS_UP:
-                if (gameProcessData.getTurn().getActivePlayerKey().equals(User.fetchPlayerUID())) {
-                    gameBoard.eraseEverything();
-                    gameProcessData.writeTurn(gameRoom.getOpponentKey());
-                }
-                break;
             case TURN_SKIPPED:
                 gameBoard.eraseEverything();
-                gameProcessData.writeTurn(gameRoom.getOpponentKey());
+
+                gameProcessData.writeFirstPlayerSkippedTurn().addOnCompleteListener(task -> {
+                    gameProcessData.writeTurn(whoIsNext());
+                });
+
                 break;
             case COMBINATION_SUBMITTED:
-                if (confirmCombination()) {
-                    gameProcessData.writeTurn(gameRoom.getOpponentKey());
+                ArrayList<Task<Void>> tasksArray = confirmCombination();
+                if (tasksArray != null) {
+                    Tasks.whenAll(tasksArray)
+                            .addOnCompleteListener(tasks -> gameProcessData.writeTurn(gameRoom.getMyOpponentKey()));
+
 //                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 //                        Thread thread = new Thread(new Runnable() {
 //                            @Override
@@ -188,6 +242,7 @@ public class GameViewModel extends ViewModel {
 //                        });
 //                        thread.start();
 //                    }
+
                     return true;
                 }
                 break;
@@ -216,7 +271,7 @@ public class GameViewModel extends ViewModel {
         return dataConsumedStatus;
     }
 
-    public LiveData<String> getGameStageUniqueSnapshotLiveData() {
+    public LiveData<String> getDataStateNewValueSnapshotLiveData() {
         return dataStateNewValueSnapshotLiveData;
     }
 
@@ -248,7 +303,35 @@ public class GameViewModel extends ViewModel {
         return serverOffsetNewValueSnapshotLiveData;
     }
 
-//    public NewValueSnapshotLiveData<Integer> getFirstPlayerStatusCodeNewValueSnapshotLiveData() {
+    public NewValueSnapshotLiveData<Integer> getGameOverCodeNewValueSnapshotLiveData() {
+        return gameOverCodeNewValueSnapshotLiveData;
+    }
+
+    public NewValueSnapshotLiveData<String> getHostPlayerUIDNewValueSnapshotLiveData() {
+        return hostPlayerUIDNewValueSnapshotLiveData;
+    }
+
+    public void eraseGameRoom() {
+        gameProcessData.eraseGameProcessData();
+        gameBoard.eraseGameBoard();
+        gameRoom.eraseGameRoom();
+        gameVocabulary.eraseGameVocabulary();
+    }
+
+//    public void playersReaction(PlayersReactionCallback playersReactionCallback){
+//        if(User.fetchPlayerUID().equals(gameRoom.getFirstPlayerUID())){
+//            playersReactionCallback.myReaction();
+//        } else if(User.fetchPlayerUID().equals(gameRoom.getSecondPlayerUID()){
+//            playersReactionCallback.myReaction();
+//        }
+//    }
+//
+//    public interface PlayersReactionCallback{
+//        void myReaction();
+//        void enemyReaction();
+//    }
+
+    //    public NewValueSnapshotLiveData<Integer> getFirstPlayerStatusCodeNewValueSnapshotLiveData() {
 //        return firstPlayerStatusCodeNewValueSnapshotLiveData;
 //    }
 
